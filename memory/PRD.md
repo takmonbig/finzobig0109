@@ -78,3 +78,9 @@ MONGO_URL, DB_NAME, CORS_ORIGINS, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_
 
 ## Next tasks
 - Connect a real email provider; add KYC document upload.
+
+## 2026-06 — Fixed Finzo Coin referral rewards (tested, iteration_11 all pass)
+- Action-based coin rewards (friend_signup 50 / friend_webinar 50 / own_webinar 20, admin-editable), NOT deposit-based. Landing ReferralBonus section, /app/coin-rewards, /admin coin rewards.
+- Privacy: uplines see only masked name/generation/rank/joined/activity of downline; coin data visible to admin only.
+- Removed "not withdrawable" line from landing ReferralBonus per user.
+- Declined (again): 10%/2%/1% of deposited USDT paid to uplines, in any denomination (incl. coins pegged 100 FZC = 1 USDT).

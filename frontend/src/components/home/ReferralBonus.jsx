@@ -29,7 +29,6 @@ export function ReferralBonus({ amounts, symbol = "FZC" }) {
       </div>
       <Reveal delay={0.25} className="mt-8 flex flex-wrap items-center gap-4">
         <Link to="/register" className="btn-gold" data-testid="referral-cta-btn"><Coins className="w-4 h-4" />Get my referral link<ArrowRight className="w-4 h-4" /></Link>
-        <p className="text-xs text-slate-500">Rewards are credited to your Referral reward coins balance and are not withdrawable.</p>
       </Reveal>
     </section>
   );

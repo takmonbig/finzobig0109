@@ -1,0 +1,29 @@
+{
+  "summary": "Tested fixed Finzo Coin referral rewards end to end. Backend: 8/8 pytest pass (test_iter12_coin_rewards_privacy.py). Registering a new user with demo.a's code B3D494B2 gives demo.a a friend_signup reward of +50 (5000 cents), credited to the referral_coins wallet and ledger. Completing the webinar three times gives the new user own_webinar +20 once and demo.a friend_webinar +50 once, with no duplicates. /team/members, /team/tree and /team/export contain no coin data, and names beyond generation 1 are masked. Admin /admin/coin-rewards lists rewards with search and totals. Settings update is validated (negative, non-integer and >100000 return 400), shows up in /coin-rewards amounts, and was restored to 50/50/20. Frontend: the landing ReferralBonus shows +50/+50/+20 FZC with no percentages or deposit wording. demo.a /app/coin-rewards shows a total of 100 and the history. The team table has exactly Name/Generation/Rank/Joined/Activity, and the tree has no coins. The admin coin rewards page loads, saves amounts with a toast, search works, and there is no horizontal overflow on mobile (390). Auth checks: bcrypt $2b$, httpOnly cookies, CORS not *.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Onboarding WelcomeTour + PWA install dialog", "issue": "On a user's first login the welcome-tour and pwa-install-dialog open at the same time and stack (two overlays). Not part of this feature, but poor first-run UX.", "selector": "[data-testid=welcome-tour], [data-testid=pwa-install-dialog]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin coin rewards (mobile 390)", "issues": ["Reward table scrolls horizontally inside its container; only Date/Earned by are visible at first. Acceptable but could use a card layout on mobile."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter12_coin_rewards_privacy.py", "/app/backend/tests/test_iter11_coin_rewards.py", "/app/test_reports/pytest/pytest_iter12.xml"],
+  "action_items": [
+    "Optional: queue the PWA install prompt until after the welcome tour closes (it already dispatches a 'tour:done' event)",
+    "Optional: remove the now-unused coin_stats import/usage from team code paths if not needed (it is still used by /coin-rewards)"
+  ],
+  "critical_code_review_comments": [
+    "award_coins relies on the idem_key check in post_ledger (find then insert), and ledger_transactions.idem_key has no unique index. Webinar completion is protected by an atomic update_one/modified_count and register runs once per user, so the risk is low today. Add a unique sparse index on ledger_transactions.idem_key for defense in depth.",
+    "friend_webinar is awarded to the referrer even if the referrer is now suspended or deleted. Decide whether that is the intended business rule.",
+    "The register rate limit is 10 per IP per hour, which test suites registering several users can hit."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter12_coin_rewards_privacy.py (new)", "/app/backend/tests/test_iter11_coin_rewards.py (team assertions updated to the new privacy rule: no coins_earned/earned_by)"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Created user TEST_Zed Newbie (test_zed_<ts>@example.com, mobile +91 78<ts>11) as demo.a's direct referral, with a completed webinar. demo.a now has 100 coins in rewards and 2 direct referrals. Reward settings restored to 50/50/20.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Set localStorage lang='en' before login to skip the language picker. After login, press Escape a few times to close the welcome-tour and pwa-install dialogs. Login submit testid: login-submit-btn. Coin amounts are stored in cents (x100). demo.a's coin total has grown with each run, so use deltas."
+}

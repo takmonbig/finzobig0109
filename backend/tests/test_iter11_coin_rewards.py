@@ -105,7 +105,7 @@ def test_team_members_coin_fields_and_privacy(chain):
     g1, g2 = items[1], items[2]
     assert g1["name"] == "TEST_Bravo Friend"
     assert g2["name"] != "TEST_Charlie Deep" and "*" in g2["name"]
-    assert g1["coins_earned"] == 7000 and g1["earned_by"] == {"friend_signup": 5000, "own_webinar": 2000}
+    assert "coins_earned" not in g1 and "earned_by" not in g1  # privacy: no coin data for uplines
     assert g1["activity"] == "active"
     for m in r["items"]:
         for k in ("email", "mobile", "balance", "deposits", "usdt_balance", "verified_deposits", "last_active_at", "ancestors"):
@@ -115,7 +115,7 @@ def test_team_members_coin_fields_and_privacy(chain):
 def test_team_tree_coin_fields(chain):
     t = chain["sa"].get(f"{BASE}/api/team/tree").json()
     n = t["root"]["children"][0]
-    assert n["coins_earned"] == 7000 and n["activity"] == "active"
+    assert "coins_earned" not in n and n["activity"] == "active"
     c = n["children"][0]
     assert "*" in c["name"] and "email" not in c
 
