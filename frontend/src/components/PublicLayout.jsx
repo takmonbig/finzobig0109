@@ -31,8 +31,8 @@ function TopNav({ name }) {
           <LangSwitcher />
           <InstallButton />
           {user ? <Link to={dash} className="btn-gold" data-testid="nav-dashboard-btn">Open dashboard</Link> : (<>
-            <Link to="/login" className="text-sm text-slate-300 hover:text-white" data-testid="nav-login-btn">Sign in</Link>
-            <Link to="/register" className="btn-gold !py-2" data-testid="nav-register-btn">Create Account</Link></>)}
+            <Link to="/login" className="text-sm text-slate-300 hover:text-white whitespace-nowrap" data-testid="nav-login-btn">Sign in</Link>
+            <Link to="/register" className="btn-gold !py-2 whitespace-nowrap" data-testid="nav-register-btn">Create Account</Link></>)}
         </div>
         <button className="lg:hidden p-2 text-slate-200" onClick={() => setOpen(!open)} aria-label="Menu" data-testid="mobile-menu-toggle">{open ? <X /> : <Menu />}</button>
       </div>

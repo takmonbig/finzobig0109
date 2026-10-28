@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 9: multi-language (en/bn/hi) webinar + guide videos. Backend 6/6 pytest pass (save three ids, invalid bn/hi -> 400 w/o persisting, bn-only, RBAC 403, guide three ids via PUT + user GET + list, backward-compat when bn/hi omitted). Frontend: webinar shows 3 lang buttons; lang=hi defaults Hindi (iframe kJQP7kiw5Fk), bn->9bZkp7q19f0, en->dQw4w9WgXcQ; lang=bn defaults Bengali; English-only shows no switch; guide with en+hi shows 2 buttons, falls back to English when user lang (bn) not available, switches correctly; no-video guide shows 'Video coming soon'. Admin /admin/learn: 3 webinar inputs save (toast 'Webinar saved') and persist after reload; invalid bn link shows inline error; guide dialog 3 inputs save ('Guide saved') and persist. Regression: user dialog password input fills row (563px input + button), set password on TEST_ user works and new password logs in; public nav labels whitespace-nowrap.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin > Webinar", "issues": ["'Current video:' link shows only English video_id; bn/hi ids not shown", "Guides table 'Video' column shows 'not set' when only bn/hi video is set (uses g.video_id only)"]},
+      {"screen": "Public header (1100-1280px)", "issues": ["Nav labels no longer wrap, but right-side 'Sign in', 'Install app' and 'Create Account' buttons wrap to 2 lines at ~1100px width (no whitespace-nowrap on CTAs)"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter9_lang_videos.py", "/app/backend/tests/iter9_setup.py", "/app/test_reports/pytest/pytest_iter9.xml"],
+  "action_items": [
+    "Low: show bn/hi ids in admin 'Current video' line and guides table video column",
+    "Low: add whitespace-nowrap to public header CTA buttons (Sign in / Install app / Create Account)"
+  ],
+  "critical_code_review_comments": [
+    "Learn.jsx: LangVideo defined above remaining import statements (works due to hoisting but unconventional; move imports to top)",
+    "Audit log for webinar.update records only English video_id; include bn/hi",
+    "LangVideo initial lang state is not reset if item video ids change while mounted (minor)"
+  ],
+  "updated_files": ["/app/backend/tests/test_iter9_lang_videos.py", "/app/backend/tests/iter9_setup.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Created TEST_ user test_iter9@example.com (deleted). Cleanup done: webinar video_url/_bn/_hi and ids reset to ''; how-to-deposit-usdt guide links reset to ''; webinar_* fields unset on demo users; register rate_limits and login_attempts cleared.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use iter9_setup.py [three|en|clear] to set/clear webinar+guide videos. With webinar video set, the webinar popup blocks the app for demo users; preset localStorage webinar_skip_at=Date.now(). Without localStorage 'lang' a language-picker modal appears on /login; preset lang. kJQP7kiw5Fk (Despacito) shows 'Video unavailable' in embed (YouTube restriction, not app bug)."
+}

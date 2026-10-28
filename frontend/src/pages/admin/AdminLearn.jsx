@@ -74,7 +74,7 @@ function GuidesAdmin() {
     <div data-testid="admin-guides">
       <div className="flex justify-end mb-3"><button className="btn-gold" onClick={() => { setErr(null); setEdit({ ...EMPTY_G }); }} data-testid="add-guide-btn"><Plus className="w-4 h-4" />Add guide</button></div>
       <Glass>{isLoading ? <Loader /> : data.length ? <div className="overflow-x-auto"><table className="tbl" data-testid="guides-table"><thead><tr><th>#</th><th>Title</th><th>Video</th><th>Views</th><th>Status</th><th /></tr></thead>
-        <tbody>{data.map((g) => <tr key={g.id}><td>{g.order}</td><td>{g.title}<p className="text-xs text-slate-500">/{g.slug}</p></td><td className="font-num text-xs">{g.video_id || <span className="text-amber-300">not set</span>}</td><td className="font-num">{g.views}</td>
+        <tbody>{data.map((g) => <tr key={g.id}><td>{g.order}</td><td>{g.title}<p className="text-xs text-slate-500">/{g.slug}</p></td><td className="font-num text-xs">{[["EN", g.video_id], ["BN", g.video_id_bn], ["HI", g.video_id_hi]].filter((x) => x[1]).map((x) => x[0]).join(" · ") || <span className="text-amber-300">not set</span>}</td><td className="font-num">{g.views}</td>
           <td>{g.active ? <span className="text-emerald-300 text-xs">Active</span> : <span className="text-slate-500 text-xs">Hidden</span>}</td>
           <td className="flex gap-2"><button className="btn-ghost !py-1 !px-2" onClick={() => { setErr(null); setEdit({ ...g, steps_text: lines(g.steps) }); }} data-testid={`edit-guide-${g.slug}`}><Pencil className="w-3.5 h-3.5" /></button>
             <Confirm testid={`delete-guide-${g.slug}`} title={`Delete "${g.title}"?`} description="This guide will be removed from every user dashboard." onConfirm={() => del.mutate(g.id)} confirmLabel="Delete"

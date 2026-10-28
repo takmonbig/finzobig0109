@@ -60,6 +60,15 @@ MONGO_URL, DB_NAME, CORS_ORIGINS, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_
 - Declined: fixed daily returns on paid plans, referral/team-bonus earnings, exposing downline login/contact data to regular users.
 - Downline export (2026-10-14): GET /api/admin/users/{id}/downline/export CSV (all 5 gens, contact, rank, status, KYC, login/active, USDT balance, deposits), audited; "Download spreadsheet" button in admin user file → Downline tab.
 
+## Iteration 7–9 (2026-10-14)
+- Downline export follows search + T1–T5 filter. Admin "Set a new password" for any user (revokes sessions, clears lockouts) + admin "Change my password" in Settings.
+- Sign-in by email OR country + mobile; /r/CODE short referral links, "Invited by" on sign-up, WhatsApp/Telegram/native share.
+- Safari/iOS fix: removed regex lookbehind (crashed Safari < 16.4).
+- Language: first-visit picker English/বাংলা/हिन्दी (Google Translate, machine translation), switcher in headers/auth/mobile menu; admin excluded (notranslate).
+- Welcome tour (6 steps) for new members; admin "Rank & reward progress" report.
+- Webinar + guides: separate YouTube links per language (en/bn/hi) with a video-language switch defaulting to site language.
+- Declined: deposit-based referral income (10/2/1%), founder profiles from unverified photos/bios, admin-controlled "live" Finzo Coin price chart.
+
 ## Backlog
 - P0: real email provider (Resend) for password reset; real SMS OTP provider.
 - P1: WebSocket-driven admin live counters; downloadable ledger CSV; KYC document upload; i18n.
