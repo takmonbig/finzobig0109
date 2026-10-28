@@ -49,12 +49,13 @@ const STEPS = [
 export const tourKey = (uid) => `finzo_tour_done_${uid}`;
 
 export function WelcomeTour({ user }) {
+  const loc = useLocation();
   const [open, setOpen] = useState(() => !localStorage.getItem(tourKey(user.id)));
   const [i, setI] = useState(0);
   const close = () => { localStorage.setItem(tourKey(user.id), "1"); setOpen(false); window.dispatchEvent(new Event("tour:done")); };
   const [Icon, title, text] = STEPS[i];
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
+    <Dialog open={open && !loc.pathname.startsWith("/app/webinar")} onOpenChange={(o) => { if (!o) close(); }}>
       <DialogContent className="bg-[#0C1120] border-amber-500/30 max-w-md overflow-hidden" data-testid="welcome-tour">
         <div className="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-amber-500/20 blur-3xl pointer-events-none" />
         <DialogHeader>

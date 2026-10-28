@@ -10,6 +10,7 @@ import { api, errMsg } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Field, ErrorBox, PasswordInput, TelegramButton, useSite } from "@/components/common";
 import { COUNTRIES } from "@/lib/countries";
+import { LangSwitcher } from "@/components/Onboarding";
 import { track } from "@/lib/pixel";
 import { Logo } from "@/components/PublicLayout";
 
@@ -17,6 +18,7 @@ const Shell = ({ title, subtitle, children }) => (
   <div className="min-h-screen mesh-bg grid place-items-center px-4 py-12">
     <div className="w-full max-w-md">
       <div className="flex justify-center mb-8"><Logo /></div>
+      <div className="flex justify-end -mt-4 mb-4"><LangSwitcher /></div>
       <div className="glass p-6 sm:p-8">
         <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
         {subtitle && <p className="text-sm text-slate-400 mt-1 mb-6">{subtitle}</p>}

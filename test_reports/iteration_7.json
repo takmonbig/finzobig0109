@@ -1,0 +1,44 @@
+{
+  "summary": "Iteration 7 - Backend 18/18 pytest pass (tests/test_iter7_auth_admin.py): mobile login (+91 9000000000 -> demo.a, 401 wrong pw, 400 missing identifier, email login OK, 5-fail lockout -> 429 on mobile identifier), admin set-password (403 user, 400 weak, 404 unknown, sessions revoked + refresh 401, old pw 401, new pw 200), admin change own password + revert, public referrer ('Demo A.', case-insensitive, 404 unknown), progress report fields + 403, downline export (all=5, generation=2 -> only T2 demo.c, q=demo.c -> only demo.c, 403 non-admin). Frontend: /login email/mobile toggle + mobile login as demo.a -> /app; /r/B3D494B2 -> /register?ref=B3D494B2 with read-only prefilled ref + 'Invited by Demo A.'; /app/team shows code, /r/ link, Copy/WhatsApp/Telegram/Share; first-visit language picker (en/bn/hi), Hindi translates page (googtrans /en/hi, html.translated-ltr, switcher=hi), English restores; /admin stays English with no picker/switcher even with Hindi cookie; new TEST_ user sees 6-step welcome tour, Done closes, no reappear after reload; admin UI set-password on TEST_ user works (toast + login with new pw 200); downline export respects T2 filter and search; /admin/team progress tab table with bars (8 rows); /admin/settings 'Change my password' card renders; no 'DEMO'/'demo data' text in user/admin headers; 390px /login (both modes), /register, /app/team no horizontal scroll. One functional bug found in language switching between two non-English languages.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/admin/reports/progress", "issue": "rank_progress treats a 0 requirement as 100% (min_team=0 for Bronze), so Members with 0 direct / 0 team display 50% progress to Bronze. Exclude zero-requirement components from the average (or weight by non-zero criteria)."},
+      {"endpoint": "GET /api/admin/reports/progress", "issue": "N+1 queries: team_counts (2 count queries) + team_volume per user for up to 1000 users on every request; will be slow at scale. Consider aggregation or caching."},
+      {"endpoint": "POST /api/admin/users/{id}/password", "issue": "Only clears login_attempts whose identifier ends with the user's email; a lockout on the mobile identifier (ip:+CCmobile) is not cleared, so a user locked out via mobile login stays locked after admin reset."},
+      {"endpoint": "POST /api/auth/change-password", "issue": "Does not set password_changed_at (admin_set_password does) - inconsistent audit data."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "lib/i18n.js setCookie / LangSwitcher", "issue": "Switching directly Hindi -> Bengali keeps the page in Hindi. Google Translate itself writes googtrans='/en/hi' on the parent domain (.emergentagent.com; on prod would be the registrable domain). setCookie only writes host + domain=hostname, so the stale parent-domain cookie wins. Observed cookies after switch: [('/en/hi','.emergentagent.com'), ('/en/bn','.sim-finance-hub...'), ('/en/hi','sim-finance-hub...')]. Fix: in setCookie, also write/expire googtrans for every parent domain suffix of location.hostname (e.g. loop over hostname.split('.') suffixes with length>=2), and expire before setting new value.", "selector": "[data-testid='lang-switcher']", "priority": "MEDIUM"},
+      {"component": "PublicLayout header (mobile/tablet <lg) and /login,/register", "issue": "LangSwitcher is only in the 'hidden lg:flex' desktop block and not in the mobile menu; auth pages have no switcher. A mobile visitor who picked বাংলা/हिन्दी in the first-visit picker cannot switch back on public pages without logging in. Add LangSwitcher to the mobile-menu and auth layout.", "selector": "[data-testid='mobile-menu']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Post-registration /app/webinar", "issues": ["Welcome tour opens on top of the webinar page right after registration (not after it), competing with the webinar content. Consider delaying the tour until the user leaves the webinar page / lands on /app dashboard."]},
+      {"screen": "Admin user dialog - Set a new password", "issues": ["ud-new-password-input is type='text' so the password is shown in clear text on screen; consider PasswordInput with reveal toggle."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter7_auth_admin.py", "/app/test_reports/pytest/iter7_results.xml"],
+  "action_items": [
+    "Fix lib/i18n.js setCookie to clear/set googtrans on all parent domains so bn<->hi switching works.",
+    "Add LangSwitcher to public mobile menu and to /login,/register layout.",
+    "(Minor) progress_report: don't count zero requirements as 100% progress.",
+    "(Minor) admin_set_password: also clear mobile-identifier login_attempts (e.g. regex on country_code+mobile).",
+    "(Minor) Consider showing welcome tour after webinar page instead of over it."
+  ],
+  "critical_code_review_comments": [
+    "linkify.js: lookbehind removed; no other (?<= / (?<! found in src - Safari fix OK.",
+    "WelcomeTour completion stored only in localStorage per device - tour reappears on new devices/browsers; persist a flag server-side if one-time is required.",
+    "progress_report is O(users) DB round trips; paginate or aggregate.",
+    "Playbook: bcrypt $2b$ hashes confirmed, httpOnly access_token cookie set, lockout after 5 fails confirmed (email + mobile)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter7_auth_admin.py"],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "~90% (all requested flows pass; language bn<->hi switch bug + missing mobile switcher)"},
+  "test_credentials": "admin takmonboost90@gmail.com / Admin@Demo2026; demo.a..f@example.com / Demo@12345 (verified all 200 at end)",
+  "seed_data_creation": "TEST_ users created by pytest and by UI (test_tour_*) - all deleted with their records; login_attempts cleared; admin password reverted to Admin@Demo2026.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "demo.a id 5e603513-2a5c-4b32-8222-ce4fb91a4de4, code B3D494B2. Registering with ?ref=B3D494B2 temporarily changes demo.a counts (live counts). Language: localStorage 'lang' + googtrans cookie; GT script adds parent-domain cookie. Download button in admin downline tab text is 'Download spreadsheet'. Retest hi->bn switching and mobile switcher after fix."
+}

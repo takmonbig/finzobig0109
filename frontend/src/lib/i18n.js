@@ -3,9 +3,14 @@ export const LANGS = [["en", "English", "English"], ["bn", "বাংলা", "B
 export const getLang = () => localStorage.getItem("lang");
 
 const setCookie = (v) => {
-  const age = v ? 31536000 : 0;
-  document.cookie = `googtrans=${v};path=/;max-age=${age}`;
-  document.cookie = `googtrans=${v};path=/;domain=${window.location.hostname};max-age=${age}`;
+  const parts = window.location.hostname.split(".");
+  const domains = [""];
+  for (let i = 0; i < parts.length - 1; i++) domains.push(parts.slice(i).join("."), `.${parts.slice(i).join(".")}`);
+  domains.forEach((d) => {
+    const dom = d ? `;domain=${d}` : "";
+    document.cookie = `googtrans=;path=/${dom};expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  });
+  if (v) domains.forEach((d) => { document.cookie = `googtrans=${v};path=/${d ? `;domain=${d}` : ""};max-age=31536000`; });
 };
 
 export function applyLang(code) {

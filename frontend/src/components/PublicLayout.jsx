@@ -38,6 +38,7 @@ function TopNav({ name }) {
       </div>
       {open && (
         <div className="lg:hidden border-t border-slate-800 bg-[#070A12] px-4 py-4 space-y-1" data-testid="mobile-menu">
+          <div className="pb-2"><LangSwitcher /></div>
           {NAV.map(([l, h]) => <a key={h} href={h} onClick={() => setOpen(false)} className="block py-3 text-slate-200 border-b border-slate-800/60">{l}</a>)}
           <div className="flex gap-3 pt-3">
             {user ? <Link to={dash} className="btn-gold flex-1">Dashboard</Link> : (<>

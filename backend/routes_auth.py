@@ -256,7 +256,7 @@ async def change_pw(body: ChangePwIn, user=Depends(get_current_user)):
     if not verify_password(body.current_password, full["password_hash"]):
         raise HTTPException(400, "Current password is incorrect")
     check_password_strength(body.new_password)
-    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(body.new_password), "password_changed_at": iso()}})
     await db.sessions.update_many({"user_id": user["id"], "id": {"$ne": user["_sid"]}}, {"$set": {"revoked": True, "revoked_reason": "password_change"}})
     return {"ok": True}
 

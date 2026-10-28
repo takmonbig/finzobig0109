@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { api, coins, errMsg, fdate, downloadCsv } from "@/lib/api";
-import { Glass, PageHeader, Stat, Loader, Empty, StatusBadge, Field, Pager, Confirm, RankBadge } from "@/components/common";
+import { Glass, PageHeader, Stat, Loader, Empty, StatusBadge, Field, Pager, Confirm, RankBadge, PasswordInput } from "@/components/common";
 import { TT, ChartCard } from "@/pages/app/UserPages";
 
 export const get = (url, params) => api.get(url, { params }).then((r) => r.data);
@@ -77,7 +77,7 @@ function SetPassword({ id }) {
   };
   return (
     <div className="border-t border-slate-800 pt-3"><p className="text-sm font-semibold text-white mb-2">Set a new password</p>
-      <div className="flex gap-2"><Input className="inp" type="text" placeholder="Min 8 characters, letters + numbers" value={pw} onChange={(e) => setPw(e.target.value)} data-testid="ud-new-password-input" />
+      <div className="flex gap-2"><PasswordInput placeholder="Min 8 characters, letters + numbers" value={pw} onChange={(e) => setPw(e.target.value)} testid="ud-new-password-input" />
         <button className="btn-gold shrink-0" disabled={busy || pw.length < 8} onClick={save} data-testid="ud-set-password-btn">Set password</button></div></div>
   );
 }

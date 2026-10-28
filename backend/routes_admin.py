@@ -126,13 +126,14 @@ class SetPwIn(BaseModel):
 async def admin_set_password(user_id: str, b: SetPwIn, request: Request, admin=Depends(require_admin)):
     from routes_auth import check_password_strength
     from core import hash_password, security_event
-    u = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "email": 1})
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "email": 1, "country_code": 1, "mobile": 1})
     if not u:
         raise HTTPException(404, "User not found")
     check_password_strength(b.new_password)
     await db.users.update_one({"id": user_id}, {"$set": {"password_hash": hash_password(b.new_password), "password_changed_at": iso()}})
     await db.sessions.update_many({"user_id": user_id, "revoked": False}, {"$set": {"revoked": True, "revoked_reason": "admin_password_reset"}})
-    await db.login_attempts.delete_many({"identifier": {"$regex": re.escape(u["email"]) + "$"}})
+    idents = [re.escape(u["email"]) + "$"] + ([re.escape(f"{u['country_code']}{u['mobile']}") + "$"] if u.get("mobile") else [])
+    await db.login_attempts.delete_many({"identifier": {"$regex": "|".join(idents)}})
     await security_event("admin_password_reset", user_id, client_ip(request), {"by": admin["email"]}, "warning")
     await audit(admin, "user.password_reset", "user", user_id, {}, client_ip(request))
     await notify_user(user_id, "Your password was changed", "An administrator set a new password for your account. Contact support if you did not request this.", kind="security")
@@ -150,7 +151,8 @@ async def progress_report(admin=Depends(require_admin)):
         names = [r["name"] for r in RANKS]
         cur = names.index(u["rank"]) if u.get("rank") in names else -1
         nxt = RANKS[cur + 1] if cur + 1 < len(RANKS) else None
-        rank_pct = 100 if not nxt else round(100 * min(1, direct / nxt["min_direct"] if nxt["min_direct"] else 1) * 0.5 + 100 * min(1, team / nxt["min_team"] if nxt["min_team"] else 1) * 0.5)
+        parts = [] if not nxt else [min(1, x / need) for x, need in ((direct, nxt["min_direct"]), (team, nxt["min_team"])) if need]
+        rank_pct = 100 if not nxt else round(100 * sum(parts) / len(parts)) if parts else 100
         vol = await team_volume(u["id"])
         reached = [r["title"] for r in rewards if vol >= r["milestone"]]
         nr = next((r for r in rewards if vol < r["milestone"]), None)
