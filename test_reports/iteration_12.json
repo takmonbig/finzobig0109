@@ -1,0 +1,40 @@
+{
+  "summary": "Tested 3-level fixed Finzo Coin referral rewards and the Refer & Earn popup/panel. Backend 6/6 passed (iter13 file): when X signs up with demo.c's code, demo.c gets friend_signup 50, demo.b gets l2_signup 20 and demo.a gets l3_signup 10. When X completes the webinar, X gets own_webinar 20, C gets 50, B gets 20 and A gets 10. Repeating the webinar 3x adds nothing (exactly 6 coin_rewards docs). public/site returns all 7 reward keys plus promo_banner. Admin promo-banner save, javascript: URL rejection and 403/401 access control all work. Frontend at 390px and 1920px: the landing popup shows the built-in poster (+50/+20/+10, total 160 FZC). Closing it sets promo_seen:<version> and it does not reopen after reload. referral-bonus-section shows the poster with no horizontal overflow. The refer-plan-btn works on /app/team and /app/coin-rewards. The /app OVERVIEW page CRASHED with 'ReferPlanButton is not defined' because UserPages.jsx was missing the import. I added the import and it now works at both sizes. Admin /admin/coin-rewards shows 7 inputs, the size hint, popup/panel slots, preview modals and an enabled toggle that persists after reload. With panel_image_url set via API, the user modal shows refer-poster-image (image loaded) while the landing popup keeps the built-in poster. All data was restored afterwards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/admin/settings referral_rewards", "issue": "A partial payload sets every missing key to 0 (int(rr.get(k, 0))). Example: sending only {friend_signup, friend_webinar, own_webinar} silently zeroes the l2/l3 rewards. The old iter12 test did exactly this. Merge with current values instead: {**s['referral_rewards'], **rr}."},
+      {"endpoint": "PUT /api/admin/promo-banner", "issue": "version=iso() is regenerated on every save, including toggling enabled or changing only panel_image_url. Every visitor who already dismissed the popup sees it again. Consider bumping version only when popup_image_url changes or enabled flips false->true."},
+      {"endpoint": "award_upline (core.py)", "issue": "L2/L3 ancestors are rewarded even if suspended or deleted. Registration only checks the direct referrer's status. Consider skipping inactive uplines."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "UserPages.jsx overview", "issue": "Runtime crash 'ReferPlanButton is not defined': the import was missing, so the whole /app overview failed. FIXED by the testing agent (added the import).", "selector": "[data-testid='refer-plan-btn']", "priority": "CRITICAL (fixed)"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Landing first visit", "issues": ["The language chooser dialog (Onboarding) and the Refer & Earn popup open at the same time, stacked. After closing the promo the language dialog is still behind it. Consider showing the promo only after the language is chosen (localStorage 'lang' set)."]},
+      {"screen": "User /app pages", "issues": ["The PWA install dialog can open over/under the refer-plan modal (seen at /app/coin-rewards), giving two stacked overlays."]},
+      {"screen": "Admin coin rewards", "issues": ["Toggling 'Show popup' shows the toast 'Promo images saved'. The wording is misleading for a toggle."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter13_multilevel_promo.py", "/app/backend/tests/test_iter12_coin_rewards_privacy.py", "/app/test_reports/pytest/pytest_iter13.xml"],
+  "action_items": [
+    "Make the referral_rewards PUT merge with existing values so a partial payload does not zero the L2/L3 rewards",
+    "Avoid regenerating the promo version on unrelated saves (enabled toggle, panel image)",
+    "Sequence the first-visit dialogs (language chooser -> promo) and keep the PWA prompt from opening while the refer modal is open",
+    "Optionally skip suspended/deleted ancestors in award_upline"
+  ],
+  "critical_code_review_comments": [
+    "UserPages.jsx used ReferPlanButton without importing it; check imports when adding components to large page files (UserPages.jsx is very large and should be split)",
+    "routes_admin.py update_settings referral_rewards uses int(rr.get(k, 0)), which destructively defaults missing keys to 0",
+    "FirstVisitPromo also runs for logged-in users visiting /; acceptable but worth confirming"
+  ],
+  "updated_files": ["/app/frontend/src/pages/app/UserPages.jsx", "/app/backend/tests/test_iter13_multilevel_promo.py", "/app/backend/tests/test_iter12_coin_rewards_privacy.py"],
+  "success_rate": {"backend": "100% (6/6 iter13; iter12 settings/access/auth tests pass after updating them to 7 keys)", "frontend": "100% after the import fix (overview crashed before the fix)"},
+  "seed_data_creation": "Registered TEST_Xen Level (test_xen_<ts>@example.com) under demo.c, plus a couple more test users from reruns. Settings and promo_banner were restored to defaults/empty with enabled=true.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run the test files one at a time with '-n 0'. pytest.ini enables xdist, and the files interfere through the shared global settings. Register is rate-limited to 10/hour per IP, so reruns can return 429. To avoid dialogs blocking clicks in /app, set these localStorage keys before testing: lang=en, pwa_prompt_at=now, push_later_at=now, finzo_tour_done_<uid>=1, webinar_skip_at=now."
+}

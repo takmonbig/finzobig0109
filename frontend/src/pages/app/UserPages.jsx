@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { GuidesGrid } from "@/pages/app/Learn";
 import { CoinRateCard } from "@/components/home/TeamRate";
 import { useSite } from "@/components/common";
+import { ReferPlanButton } from "@/components/ReferPlan";
 import { Glass, PageHeader, Stat, Loader, Empty, ErrorBox, StatusBadge, DemoTag, Field, Pager, Confirm, LinkText, TelegramButton, RankBadge, PasswordInput } from "@/components/common";
 
 export const TT = { contentStyle: { background: "#0C1120", border: "1px solid #334155", borderRadius: 12, fontSize: 12 } };

@@ -84,3 +84,4 @@ MONGO_URL, DB_NAME, CORS_ORIGINS, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_
 - Privacy: uplines see only masked name/generation/rank/joined/activity of downline; coin data visible to admin only.
 - Removed "not withdrawable" line from landing ReferralBonus per user.
 - Declined (again): 10%/2%/1% of deposited USDT paid to uplines, in any denomination (incl. coins pegged 100 FZC = 1 USDT).
+- 3-level fixed coin rewards (l2/l3 signup+webinar), Refer & Earn popup (first visit, localStorage) + "Refer plan" button on overview/team/coin-rewards; admin uploads separate popup/panel Cloudinary images with size hint (Admin > Coin rewards). Tested iteration_12 all pass.

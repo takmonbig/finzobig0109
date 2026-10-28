@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="2" failures="0" skipped="0" tests="6" time="3.012" timestamp="2026-10-28T23:57:34.184697+00:00" hostname="agent-env-2b028f83-a166-4fdf-b4af-cc2b4895274f"><testcase classname="tests.test_iter13_multilevel_promo" name="test_signup_3_levels" time="1.615"><error message="failed on setup with &quot;AssertionError: {&quot;detail&quot;:&quot;Too many requests. Please try again later.&quot;}&#10;assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code&quot;">tests/test_iter13_multilevel_promo.py:52: in chain
+    assert r.status_code == 200, r.text
+E   AssertionError: {"detail":"Too many requests. Please try again later."}
+E   assert 429 == 200
+E    +  where 429 = &lt;Response [429]&gt;.status_code</error></testcase><testcase classname="tests.test_iter13_multilevel_promo" name="test_webinar_3_levels_idempotent" time="0.000"><error message="failed on setup with &quot;AssertionError: {&quot;detail&quot;:&quot;Too many requests. Please try again later.&quot;}&#10;assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code&quot;">tests/test_iter13_multilevel_promo.py:52: in chain
+    assert r.status_code == 200, r.text
+E   AssertionError: {"detail":"Too many requests. Please try again later."}
+E   assert 429 == 200
+E    +  where 429 = &lt;Response [429]&gt;.status_code</error></testcase><testcase classname="tests.test_iter13_multilevel_promo" name="test_public_site" time="0.137" /><testcase classname="tests.test_iter13_multilevel_promo" name="test_admin_settings_7_keys" time="0.257" /><testcase classname="tests.test_iter13_multilevel_promo" name="test_promo_banner" time="0.337" /><testcase classname="tests.test_iter13_multilevel_promo" name="test_promo_banner_access" time="0.509" /></testsuite></testsuites>

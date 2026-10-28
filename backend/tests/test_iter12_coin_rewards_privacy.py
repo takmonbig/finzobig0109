@@ -11,7 +11,7 @@ DEMO_A = {"email": "demo.a@example.com", "password": "Demo@12345"}
 REF = "B3D494B2"
 PWD = "Test@12345x"
 TS = str(int(time.time()))[-6:]
-DEFAULT = {"friend_signup": 50, "friend_webinar": 50, "own_webinar": 20}
+DEFAULT = {"friend_signup": 50, "friend_webinar": 50, "own_webinar": 20, "l2_signup": 20, "l2_webinar": 20, "l3_signup": 10, "l3_webinar": 10}
 DB = MongoClient("mongodb://localhost:27017")["test_database"]
 
 
@@ -119,7 +119,7 @@ def test_admin_coin_rewards(admin, ctx):
 
 
 def test_admin_settings_update_reflects(admin, demo_a):
-    new = {"friend_signup": 70, "friend_webinar": 30, "own_webinar": 15}
+    new = {**DEFAULT, "friend_signup": 70, "friend_webinar": 30, "own_webinar": 15}
     r = admin.put(f"{BASE}/api/admin/settings", json={"referral_rewards": new})
     assert r.status_code == 200, r.text
     assert demo_a.get(f"{BASE}/api/coin-rewards").json()["amounts"] == new
