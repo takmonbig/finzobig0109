@@ -58,7 +58,7 @@ function Overview() {
   const w = d.wallets;
   return (
     <div data-testid="user-overview">
-      <PageHeader title="Account overview" subtitle="Your USDT wallet and team at a glance." />
+      <div className="flex flex-wrap items-start justify-between gap-3"><PageHeader title="Account overview" subtitle="Your USDT wallet and team at a glance." /><ReferPlanButton /></div>
       <Banners />
       <OverviewRate />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

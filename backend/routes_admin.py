@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 import time
 import os
 import cloudinary.utils
-from core import (db, iso, now, uid, client_ip, require_admin, audit, get_settings, bust_settings, post_ledger, release, wallets_of, to_minor,
+from core import (REWARD_KEYS, db, iso, now, uid, client_ip, require_admin, audit, get_settings, bust_settings, post_ledger, release, wallets_of, to_minor,
                   RANKS, COMMISSION, team_counts, recompute_rank, safe_url, strip_html, notify_user, ACCOUNTS, clean, rank_for)
 from routes_user import paged, page_args, verify_asset, P0, team_volume
 from jobs import run_simulation, dispatch_campaign, resolve_audience
@@ -844,6 +844,22 @@ async def save_team_members(b: MembersIn, request: Request, admin=Depends(requir
     return {"ok": True, "members": val}
 
 
+class PromoIn(BaseModel):
+    popup_image_url: str = ""
+    panel_image_url: str = ""
+    enabled: bool = True
+    title: str = Field(default="Refer & Earn", max_length=80)
+
+
+@router.put("/promo-banner")
+async def save_promo_banner(b: PromoIn, request: Request, admin=Depends(require_admin)):
+    val = {"popup_image_url": safe_url(b.popup_image_url) if b.popup_image_url else "", "panel_image_url": safe_url(b.panel_image_url) if b.panel_image_url else "",
+           "enabled": b.enabled, "title": strip_html(b.title), "version": iso()}
+    await db.website_content.update_one({"key": "promo_banner"}, {"$set": {"value": val, "updated_at": iso(), "updated_by": admin["email"]}}, upsert=True)
+    await audit(admin, "cms.promo_banner", "website_content", "promo_banner", {"enabled": b.enabled}, client_ip(request))
+    return {"ok": True, **val}
+
+
 class RateIn(BaseModel):
     price_usd: float = Field(gt=0, le=1_000_000)
     volume_usd: float = Field(default=0, ge=0)
@@ -895,7 +911,7 @@ async def update_settings(body: dict, request: Request, admin=Depends(require_ad
     if "referral_rewards" in upd:
         rr = upd["referral_rewards"]
         try:
-            upd["referral_rewards"] = {k: int(rr.get(k, 0)) for k in ("friend_signup", "friend_webinar", "own_webinar")}
+            upd["referral_rewards"] = {k: int(rr.get(k, 0)) for k in REWARD_KEYS}
         except (TypeError, ValueError, AttributeError):
             raise HTTPException(400, "Reward amounts must be whole numbers")
         if any(v < 0 or v > 100000 for v in upd["referral_rewards"].values()):

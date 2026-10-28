@@ -2,15 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { Coins, UserPlus, PlayCircle, GraduationCap } from "lucide-react";
 import { api, coins, fdate } from "@/lib/api";
 import { Glass, PageHeader, Stat, Loader, Empty } from "@/components/common";
+import { ReferPlanButton } from "@/components/ReferPlan";
 
-export const ACTIONS = { friend_signup: ["Friend joined", UserPlus], friend_webinar: ["Friend finished webinar", PlayCircle], own_webinar: ["My webinar", GraduationCap] };
+export const ACTIONS = { friend_signup: ["L1 joined", UserPlus], friend_webinar: ["L1 webinar", PlayCircle], l2_signup: ["L2 joined", UserPlus], l2_webinar: ["L2 webinar", PlayCircle],
+  l3_signup: ["L3 joined", UserPlus], l3_webinar: ["L3 webinar", PlayCircle], own_webinar: ["My webinar", GraduationCap] };
 
 export default function CoinRewards() {
   const { data, isLoading } = useQuery({ queryKey: ["coin-rewards"], queryFn: () => api.get("/coin-rewards").then((r) => r.data) });
   if (isLoading) return <Loader />;
   return (
     <div data-testid="coin-rewards-page">
-      <PageHeader title="Coin rewards" subtitle="Finzo Coins you earned and the actions that earned them." />
+      <div className="flex flex-wrap items-start justify-between gap-3"><PageHeader title="Coin rewards" subtitle="Finzo Coins you earned and the actions that earned them." /><ReferPlanButton /></div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <Stat label="Total earned" value={coins(data.total)} icon={Coins} testid="coin-total" />
         {Object.entries(ACTIONS).map(([k, [l, I]]) => <Stat key={k} label={l} value={coins(data.by_action[k] || 0)} icon={I} tone="blue" testid={`coin-by-${k}`} hint={`+${data.amounts[k] ?? 0} each`} />)}

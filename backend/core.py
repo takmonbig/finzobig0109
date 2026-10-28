@@ -59,7 +59,7 @@ DEFAULT_SETTINGS = {
     "coin": {"name": "Finzo Coin", "symbol": "FZC", "decimals": 2, "rates": {"USD": 100}, "history": []},
     "simulation_day_seconds": 86400,
     "signup_demo_grant": 10000,
-    "referral_rewards": {"friend_signup": 50, "friend_webinar": 50, "own_webinar": 20},
+    "referral_rewards": {"friend_signup": 50, "friend_webinar": 50, "own_webinar": 20, "l2_signup": 20, "l2_webinar": 20, "l3_signup": 10, "l3_webinar": 10},
     "session_timeout_minutes": 60,
     "maintenance_mode": False,
     "features": {"deposits": True, "withdrawals": True, "plans": True, "team_messages": True, "rewards": True, "push": True},
@@ -77,7 +77,7 @@ async def get_settings():
     if not doc:
         doc = {"key": "global", **DEFAULT_SETTINGS}
         await db.system_settings.insert_one(dict(doc))
-    merged = {**DEFAULT_SETTINGS, **doc}
+    merged = {**DEFAULT_SETTINGS, **doc, "referral_rewards": {**DEFAULT_SETTINGS["referral_rewards"], **(doc.get("referral_rewards") or {})}}
     _settings_cache.update(v=merged, t=now().timestamp())
     return merged
 
@@ -232,7 +232,15 @@ async def wallets_of(user_id):
 
 
 REWARD_LABELS = {"friend_signup": "A friend joined with your link", "friend_webinar": "Your friend finished the welcome webinar",
-                 "own_webinar": "You finished the welcome webinar"}
+                 "own_webinar": "You finished the welcome webinar", "l2_signup": "A level 2 member joined", "l2_webinar": "A level 2 member finished the webinar",
+                 "l3_signup": "A level 3 member joined", "l3_webinar": "A level 3 member finished the webinar"}
+REWARD_KEYS = tuple(REWARD_LABELS)
+LEVEL_ACTIONS = {"signup": ("friend_signup", "l2_signup", "l3_signup"), "webinar": ("friend_webinar", "l2_webinar", "l3_webinar")}
+
+
+async def award_upline(ancestors, kind, source_user_id):
+    for lvl, upline in enumerate((ancestors or [])[:3]):
+        await award_coins(upline, LEVEL_ACTIONS[kind][lvl], source_user_id)
 
 
 async def award_coins(user_id, action, source_user_id=None):

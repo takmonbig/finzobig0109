@@ -6,6 +6,7 @@ import { PlansSection, TeamDiagram, RewardsSection, FAQ } from "@/components/hom
 import { TeamBonus } from "@/components/home/TeamBonus";
 import { TeamMembers, CoinRateSection } from "@/components/home/TeamRate";
 import { ReferralBonus } from "@/components/home/ReferralBonus";
+import { FirstVisitPromo } from "@/components/ReferPlan";
 
 export default function Home() {
   const { data: site, isLoading } = useSite();
@@ -27,6 +28,7 @@ export default function Home() {
       <ReferralBonus amounts={site?.settings?.referral_rewards} symbol={site?.settings?.coin?.symbol} />
       <RewardsSection rewards={rewards.data || []} />
       <TeamMembers members={c.team_members} />
+      <FirstVisitPromo />
       <FAQ items={c.faqs} />
     </div>
   );

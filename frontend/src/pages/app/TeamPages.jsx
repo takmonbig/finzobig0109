@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { api, coins, errMsg, fdate, downloadCsv } from "@/lib/api";
 import { Glass, PageHeader, Stat, Loader, Empty, ErrorBox, StatusBadge, Field, Pager, RankBadge, ImageUpload, DemoTag } from "@/components/common";
 import { TT, ChartCard } from "@/pages/app/UserPages";
+import { ReferPlanButton } from "@/components/ReferPlan";
 
 
 const get = (url, params) => api.get(url, { params }).then((r) => r.data);
@@ -158,7 +159,7 @@ function Team() {
   if (s.error) return <ErrorBox error={errMsg(s.error)} />;
   return (
     <div data-testid="team-page">
-      <PageHeader title="My team network" subtitle="Five-generation referral structure, rank qualification and the commission calculator." />
+      <div className="flex flex-wrap items-start justify-between gap-3"><PageHeader title="My team network" subtitle="Five-generation referral structure, rank qualification and the commission calculator." /><ReferPlanButton /></div>
       <Tabs defaultValue="summary">
         <TabsList className="bg-slate-900 flex-wrap h-auto mb-5">
           <TabsTrigger value="summary" data-testid="team-tab-summary">Summary & ranks</TabsTrigger><TabsTrigger value="tree" data-testid="team-tab-tree">Tree view</TabsTrigger>

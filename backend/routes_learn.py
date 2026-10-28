@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 
 from datetime import timedelta
 
-from core import db, iso, uid, now, get_current_user, require_admin, audit, client_ip, strip_html, notify_user, send_push, award_coins
+from core import db, iso, uid, now, get_current_user, require_admin, audit, client_ip, strip_html, notify_user, send_push, award_coins, award_upline
 
 router = APIRouter(prefix="/api")
 P0 = {"_id": 0}
@@ -86,8 +86,7 @@ async def complete_webinar(user=Depends(get_current_user)):
     r = await db.users.update_one({"id": user["id"], "webinar_completed_at": {"$exists": False}}, {"$set": {"webinar_completed_at": iso()}})
     if r.modified_count:
         await award_coins(user["id"], "own_webinar")
-        if user.get("referrer_id"):
-            await award_coins(user["referrer_id"], "friend_webinar", user["id"])
+        await award_upline(user.get("ancestors"), "webinar", user["id"])
     return {"ok": True}
 
 
