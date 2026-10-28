@@ -15,6 +15,8 @@ import { api, coins, errMsg, fdate, newKey } from "@/lib/api";
 import { enablePush, disablePush, permission } from "@/lib/push";
 import { useAuth } from "@/context/AuthContext";
 import { GuidesGrid } from "@/pages/app/Learn";
+import { CoinRateCard } from "@/components/home/TeamRate";
+import { useSite } from "@/components/common";
 import { Glass, PageHeader, Stat, Loader, Empty, ErrorBox, StatusBadge, DemoTag, Field, Pager, Confirm, LinkText, TelegramButton, RankBadge, PasswordInput } from "@/components/common";
 
 export const TT = { contentStyle: { background: "#0C1120", border: "1px solid #334155", borderRadius: 12, fontSize: 12 } };
@@ -43,6 +45,12 @@ function Banners() {
 const QUICK = [["Deposit information", "/app/deposit", ArrowDownToLine], ["Withdrawal information", "/app/withdraw", ArrowUpFromLine], ["Wallet & ledger", "/app/wallet", Coins], ["My team", "/app/team", Network],
   ["Rewards", "/app/rewards", Trophy], ["Notifications", "/app/notifications", Bell], ["Support", "/app/support", LifeBuoy], ["Profile settings", "/app/profile", UserCog]];
 
+function OverviewRate() {
+  const { data } = useSite();
+  const r = data?.content?.coin_rate;
+  return r?.price_usd ? <div className="mb-5"><CoinRateCard rate={r} name={data.settings?.coin?.name} symbol={data.settings?.coin?.symbol} /></div> : null;
+}
+
 function Overview() {
   const { data: d, isLoading, error } = useQuery({ queryKey: ["dashboard"], queryFn: () => get("/dashboard") });
   if (isLoading) return <Loader />;
@@ -52,6 +60,7 @@ function Overview() {
     <div data-testid="user-overview">
       <PageHeader title="Account overview" subtitle="Your USDT wallet and team at a glance." />
       <Banners />
+      <OverviewRate />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat label="Team members" value={d.team} icon={Users} tone="blue" testid="stat-team" hint={`${d.direct} direct`} />
         <Stat label="Current rank" value={d.rank} icon={Award} testid="stat-rank" />

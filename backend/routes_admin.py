@@ -269,7 +269,7 @@ async def adjust(user_id: str, b: AdjustIn, request: Request, admin=Depends(requ
 
 # ---------------- uploads ----------------
 class AdminSigIn(BaseModel):
-    folder: str = Field(pattern=r"^(qr|rewards|notifications|cms|branding)$")
+    folder: str = Field(pattern=r"^(qr|rewards|notifications|cms|branding|team)$")
 
 
 @router.post("/uploads/signature")
@@ -805,6 +805,41 @@ async def update_content(key: str, b: ContentIn, request: Request, admin=Depends
     await db.website_content.update_one({"key": key}, {"$set": {"value": b.value, "updated_at": iso(), "updated_by": admin["email"]}}, upsert=True)
     await audit(admin, "cms.update", "website_content", key, {}, client_ip(request))
     return {"ok": True}
+
+
+class MemberIn(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    role: str = Field(min_length=2, max_length=80)
+    bio: str = Field(default="", max_length=400)
+    image_url: str = ""
+
+
+class MembersIn(BaseModel):
+    members: list[MemberIn] = Field(max_length=24)
+
+
+@router.put("/team-members")
+async def save_team_members(b: MembersIn, request: Request, admin=Depends(require_admin)):
+    val = [{"name": strip_html(m.name), "role": strip_html(m.role), "bio": strip_html(m.bio), "image_url": safe_url(m.image_url) if m.image_url else ""} for m in b.members]
+    await db.website_content.update_one({"key": "team_members"}, {"$set": {"value": val, "updated_at": iso(), "updated_by": admin["email"]}}, upsert=True)
+    await audit(admin, "cms.team_members", "website_content", "team_members", {"count": len(val)}, client_ip(request))
+    return {"ok": True, "members": val}
+
+
+class RateIn(BaseModel):
+    price_usd: float = Field(gt=0, le=1_000_000)
+    volume_usd: float = Field(default=0, ge=0)
+
+
+@router.post("/coin-rate")
+async def set_coin_rate(b: RateIn, request: Request, admin=Depends(require_admin)):
+    cur = await db.website_content.find_one({"key": "coin_rate"}, P0)
+    hist = (cur or {}).get("value", {}).get("history", [])
+    point = {"at": iso(), "price_usd": round(b.price_usd, 6), "volume_usd": round(b.volume_usd, 2)}
+    val = {**point, "history": (hist + [point])[-365:]}
+    await db.website_content.update_one({"key": "coin_rate"}, {"$set": {"value": val, "updated_at": iso(), "updated_by": admin["email"]}}, upsert=True)
+    await audit(admin, "coin_rate.set", "website_content", "coin_rate", {"price_usd": point["price_usd"]}, client_ip(request))
+    return {"ok": True, **point}
 
 
 SETTING_KEYS = {"site_name", "logo_url", "favicon_url", "theme", "contact", "company_info", "telegram", "coin", "simulation_day_seconds", "signup_demo_grant",

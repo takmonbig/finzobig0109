@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { LayoutDashboard, Wallet, Layers, ArrowDownToLine, ArrowUpFromLine, Network, Trophy, Bell, Megaphone, LifeBuoy, UserCog, Users, CreditCard, Gift,
-  FileText, Settings, ScrollText, ShieldCheck, Landmark, MessageSquareWarning, PlayCircle, Video, Target, CalendarDays } from "lucide-react";
+  FileText, Settings, ScrollText, ShieldCheck, Landmark, MessageSquareWarning, PlayCircle, Video, Target, CalendarDays, UsersRound } from "lucide-react";
 import { api } from "@/lib/api";
 import { initPixels, track } from "@/lib/pixel";
 import { LanguagePicker } from "@/components/Onboarding";
@@ -31,6 +31,7 @@ const AC = lazy(() => import("@/pages/admin/AdminContent"));
 const L = lazy(() => import("@/pages/app/Learn"));
 const AL = lazy(() => import("@/pages/admin/AdminLearn"));
 const ACT = lazy(() => import("@/pages/app/Activity"));
+const ATR = lazy(() => import("@/pages/admin/AdminTeamRate"));
 
 function PixelTracker() {
   const loc = useLocation();
@@ -60,6 +61,7 @@ const ADMIN_NAV = [
   { to: "/admin/support", label: "Support tickets", icon: LifeBuoy }, { to: "/admin/cms", label: "Website CMS", icon: FileText },
   { to: "/admin/settings", label: "System settings", icon: Settings }, { to: "/admin/logs", label: "Audit & security", icon: ScrollText },
   { to: "/admin/learn", label: "Webinar & guides", icon: Video }, { to: "/admin/pixels", label: "Meta Pixels", icon: Target },
+  { to: "/admin/team-rate", label: "Team section & coin rate", icon: UsersRound },
 ];
 
 function Guard({ role, children }) {
@@ -120,6 +122,7 @@ function AppRoutes() {
         <Route path="settings" element={S(<AC page="settings" />)} />
         <Route path="learn" element={S(<AL page="learn" />)} />
         <Route path="pixels" element={S(<AL page="pixels" />)} />
+        <Route path="team-rate" element={S(<ATR />)} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

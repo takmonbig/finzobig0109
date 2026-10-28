@@ -68,7 +68,7 @@ function Footer({ site }) {
         </div>
       </div>
       <div className="border-t border-slate-800/70 py-5 px-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <TrustBadge /><span>© {new Date().getFullYear()} {s.site_name}</span>
+        <TrustBadge /><span>© {new Date().getFullYear()} {s.site_name}</span><span data-testid="footer-trading-control">Trading control by Finzo.cc</span>
       </div>
     </footer>
   );
