@@ -25,7 +25,7 @@ function TopNav({ name }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Logo name={name} />
         <nav className="hidden lg:flex items-center gap-6 text-sm text-slate-300">
-          {NAV.map(([l, h]) => <a key={h} href={h} className="hover:text-amber-300 transition-colors" data-testid={`nav-${l.toLowerCase().replace(/ /g, "-")}`}>{l}</a>)}
+          {NAV.map(([l, h]) => <a key={h} href={h} className="hover:text-amber-300 transition-colors whitespace-nowrap" data-testid={`nav-${l.toLowerCase().replace(/ /g, "-")}`}>{l}</a>)}
         </nav>
         <div className="hidden lg:flex items-center gap-3">
           <LangSwitcher />

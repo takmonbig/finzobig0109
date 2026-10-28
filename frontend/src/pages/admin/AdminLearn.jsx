@@ -39,7 +39,8 @@ function WebinarAdmin() {
           <label className="flex items-center gap-2 text-sm"><Switch checked={f.enabled} onCheckedChange={(x) => set("enabled", x)} data-testid="webinar-enabled-switch" />Webinar enabled</label>
           <label className="flex items-center gap-2 text-sm"><Switch checked={f.required} onCheckedChange={(x) => set("required", x)} data-testid="webinar-required-switch" />Required after sign-up (blocking popup)</label>
         </div>
-        {t("YouTube video link (unlisted works)", "video_url", "webinar-video-url-input")}
+        <div className="grid sm:grid-cols-3 gap-3">{t("YouTube link — English", "video_url", "webinar-video-url-input")}{t("YouTube link — বাংলা (Bengali)", "video_url_bn", "webinar-video-url-bn-input")}{t("YouTube link — हिन्दी (Hindi)", "video_url_hi", "webinar-video-url-hi-input")}</div>
+        <p className="text-xs text-slate-500 -mt-2">Unlisted links work. Users get a language switch above the video and see their chosen site language first.</p>
         <div className="grid sm:grid-cols-2 gap-3">{t("Title", "title", "webinar-title-input")}{t("Host", "host", "webinar-host-input")}{t("Duration label", "duration", "webinar-duration-input")}{t("Button text after completion", "cta_text", "webinar-cta-input")}</div>
         {t("Subtitle", "subtitle", "webinar-subtitle-input")}
         <Field label="Description"><Textarea className="inp" rows={4} value={f.description} onChange={(e) => set("description", e.target.value)} data-testid="webinar-description-input" /></Field>
@@ -57,7 +58,7 @@ function WebinarAdmin() {
   );
 }
 
-const EMPTY_G = { title: "", slug: "", description: "", video_url: "", icon: "PlayCircle", steps_text: "", order: 0, active: true };
+const EMPTY_G = { title: "", slug: "", description: "", video_url: "", video_url_bn: "", video_url_hi: "", icon: "PlayCircle", steps_text: "", order: 0, active: true };
 
 function GuidesAdmin() {
   const qc = useQueryClient();
@@ -65,7 +66,7 @@ function GuidesAdmin() {
   const [edit, setEdit] = useState(null);
   const [err, setErr] = useState(null);
   const done = (msg) => { toast.success(msg); setEdit(null); qc.invalidateQueries({ queryKey: ["admin-guides"] }); qc.invalidateQueries({ queryKey: ["guides"] }); };
-  const save = useMutation({ mutationFn: ({ id, steps_text, views, created_at, video_id, ...b }) => { const body = { ...b, steps: unlines(steps_text), order: Number(b.order) || 0 }; return id ? api.put(`/admin/guides/${id}`, body) : api.post("/admin/guides", body); },
+  const save = useMutation({ mutationFn: ({ id, steps_text, views, created_at, video_id, video_id_bn, video_id_hi, ...b }) => { const body = { ...b, steps: unlines(steps_text), order: Number(b.order) || 0 }; return id ? api.put(`/admin/guides/${id}`, body) : api.post("/admin/guides", body); },
     onSuccess: () => done("Guide saved"), onError: (e) => setErr(errMsg(e)) });
   const del = useMutation({ mutationFn: (id) => api.delete(`/admin/guides/${id}`), onSuccess: () => done("Guide deleted"), onError: (e) => toast.error(errMsg(e)) });
   const s = (k, x) => setEdit({ ...edit, [k]: x });
@@ -85,7 +86,9 @@ function GuidesAdmin() {
             <Field label="Title"><Input className="inp" value={edit.title} onChange={(e) => s("title", e.target.value)} data-testid="guide-title-input" /></Field>
             <Field label="Slug (URL)" hint="lowercase-with-dashes"><Input className="inp font-num" value={edit.slug} onChange={(e) => s("slug", e.target.value)} data-testid="guide-slug-input" /></Field>
             <Field label="Short description"><Input className="inp" value={edit.description} onChange={(e) => s("description", e.target.value)} data-testid="guide-description-input" /></Field>
-            <Field label="YouTube video link"><Input className="inp" value={edit.video_url} onChange={(e) => s("video_url", e.target.value)} data-testid="guide-video-input" /></Field>
+            <Field label="YouTube link — English"><Input className="inp" value={edit.video_url} onChange={(e) => s("video_url", e.target.value)} data-testid="guide-video-input" /></Field>
+            <div className="grid sm:grid-cols-2 gap-3"><Field label="YouTube link — বাংলা"><Input className="inp" value={edit.video_url_bn || ""} onChange={(e) => s("video_url_bn", e.target.value)} data-testid="guide-video-bn-input" /></Field>
+              <Field label="YouTube link — हिन्दी"><Input className="inp" value={edit.video_url_hi || ""} onChange={(e) => s("video_url_hi", e.target.value)} data-testid="guide-video-hi-input" /></Field></div>
             <div className="grid grid-cols-2 gap-3"><Field label="Icon"><select className={sel} value={edit.icon} onChange={(e) => s("icon", e.target.value)} data-testid="guide-icon-select">{ICONS.map((i) => <option key={i}>{i}</option>)}</select></Field>
               <Field label="Order"><Input className="inp font-num" type="number" value={edit.order} onChange={(e) => s("order", e.target.value)} data-testid="guide-order-input" /></Field></div>
             <Field label="Steps (one per line)"><Textarea className="inp" rows={5} value={edit.steps_text} onChange={(e) => s("steps_text", e.target.value)} data-testid="guide-steps-input" /></Field>

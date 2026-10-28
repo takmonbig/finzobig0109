@@ -11,10 +11,10 @@ import { Progress } from "@/components/ui/progress";
 
 export const useSite = () => useQuery({ queryKey: ["site"], queryFn: () => api.get("/public/site").then((r) => r.data), staleTime: 60000 });
 
-export const PasswordInput = forwardRef(function PasswordInput({ className = "", testid, ...p }, ref) {
+export const PasswordInput = forwardRef(function PasswordInput({ className = "", wrapperClassName = "", testid, ...p }, ref) {
   const [show, setShow] = useState(false);
   return (
-    <div className="relative">
+    <div className={`relative ${wrapperClassName}`}>
       <Input ref={ref} type={show ? "text" : "password"} className={`inp pr-10 ${className}`} data-testid={testid} {...p} />
       <button type="button" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"} data-testid={`${testid}-toggle`}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-300">{show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>

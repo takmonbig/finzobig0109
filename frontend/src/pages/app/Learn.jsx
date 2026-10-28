@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { tourKey } from "@/components/Onboarding";
+import { getLang, LANGS } from "@/lib/i18n";
+
+function LangVideo({ item, render }) {
+  const opts = LANGS.map(([c, n]) => [c, n, item[c === "en" ? "video_id" : `video_id_${c}`]]).filter((o) => o[2]);
+  const pref = getLang() || "en";
+  const [lang, setLang] = useState(() => (opts.find((o) => o[0] === pref) || opts[0] || [])[0]);
+  const cur = opts.find((o) => o[0] === lang) || opts[0];
+  if (!cur) return <NoVideo />;
+  return (
+    <div className="space-y-2" data-testid="lang-video">
+      {opts.length > 1 && <div className="flex flex-wrap items-center gap-2 notranslate" translate="no"><span className="text-xs text-slate-400">Video language:</span>
+        {opts.map(([c, n]) => <button key={c} onClick={() => setLang(c)} data-testid={`video-lang-${c}`}
+          className={`px-3 py-1 rounded-full text-xs border transition-colors ${cur[0] === c ? "border-amber-400 bg-amber-500/15 text-amber-200" : "border-slate-700 text-slate-300 hover:border-slate-500"}`}>{n}</button>)}</div>}
+      {render(cur[2])}
+    </div>
+  );
+}
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -84,7 +101,7 @@ function Webinar() {
       </motion.div>
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6">
         <div className="space-y-5">
-          {w.video_id ? <YTPlayer videoId={w.video_id} onPlay={start} onEnded={() => { setSecs(99999); if (!completed) finish(); }} testid="webinar-video" /> : <NoVideo />}
+          <LangVideo item={w} render={(vid) => <YTPlayer key={vid} videoId={vid} onPlay={start} onEnded={() => { setSecs(99999); if (!completed) finish(); }} testid="webinar-video" />} />
           <Glass><h3 className="font-semibold text-white mb-2">About this webinar</h3><p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{w.description}</p></Glass>
         </div>
         <div className="space-y-5">
@@ -102,8 +119,8 @@ function Webinar() {
               <button className="btn-gold w-full" onClick={() => nav("/app")} data-testid="webinar-continue-btn">{w.cta_text}</button>
               <Link to="/app/guides" className="btn-ghost w-full mt-2" data-testid="webinar-guides-link">Watch video guides</Link>
             </motion.div>) : (<>
-              <p className="text-sm text-slate-400 mb-3">{!w.video_id ? "The webinar video will be available soon." : playing ? (left ? `Keep watching — you can continue in ${left}s` : "Great! You can continue now.") : "Press play to start the webinar."}</p>
-              <button className="btn-gold w-full" disabled={!!w.video_id && (left > 0 || !playing)} onClick={finish} data-testid="webinar-complete-btn">I've watched the webinar</button>
+              <p className="text-sm text-slate-400 mb-3">{!(w.video_id || w.video_id_bn || w.video_id_hi) ? "The webinar video will be available soon." : playing ? (left ? `Keep watching — you can continue in ${left}s` : "Great! You can continue now.") : "Press play to start the webinar."}</p>
+              <button className="btn-gold w-full" disabled={!!(w.video_id || w.video_id_bn || w.video_id_hi) && (left > 0 || !playing)} onClick={finish} data-testid="webinar-complete-btn">I've watched the webinar</button>
             </>)}
           </Glass>
         </div>
@@ -151,7 +168,7 @@ function Guide() {
       <Link to="/app/guides" className="text-sm text-amber-400 inline-flex items-center gap-1 mb-4"><Icons.ArrowLeft className="w-4 h-4" />All guides</Link>
       <h1 className="font-display text-3xl text-white font-bold mb-2" data-testid="guide-title">{g.title}</h1><p className="text-slate-400 mb-5">{g.description}</p>
       <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6">
-        {g.video_id ? <YTPlayer videoId={g.video_id} testid="guide-video" /> : <NoVideo />}
+        <LangVideo item={g} render={(vid) => <YTPlayer key={vid} videoId={vid} testid="guide-video" />} />
         <Glass><h3 className="font-semibold text-white mb-3">Step by step</h3>
           {g.steps.length ? <ol className="space-y-3">{g.steps.map((s, i) => <li key={i} className="flex gap-3 text-sm text-slate-300"><span className="w-6 h-6 shrink-0 rounded-full bg-amber-500/15 text-amber-300 grid place-items-center text-xs font-bold">{i + 1}</span>{s}</li>)}</ol> : <Empty title="No steps yet" />}
         </Glass>
@@ -169,7 +186,7 @@ export function WebinarGate() {
   useEffect(() => { const f = () => setTourDone(true); window.addEventListener("tour:done", f); return () => { window.removeEventListener("tour:done", f); }; }, []);
   const [skipAt, setSkipAt] = useState(() => Number(localStorage.getItem("webinar_skip_at") || 0));
   const skipped = Date.now() - skipAt < 3 * 3600 * 1000;
-  const open = tourDone && !!w && w.enabled && !!w.video_id && !w.completed_at && !skipped && !loc.pathname.startsWith("/app/webinar");
+  const open = tourDone && !!w && w.enabled && !!(w.video_id || w.video_id_bn || w.video_id_hi) && !w.completed_at && !skipped && !loc.pathname.startsWith("/app/webinar");
   const skip = () => { const t = Date.now(); localStorage.setItem("webinar_skip_at", String(t)); setSkipAt(t); };
   const go = () => nav("/app/webinar");
   return (

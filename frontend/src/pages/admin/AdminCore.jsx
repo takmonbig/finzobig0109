@@ -77,7 +77,7 @@ function SetPassword({ id }) {
   };
   return (
     <div className="border-t border-slate-800 pt-3"><p className="text-sm font-semibold text-white mb-2">Set a new password</p>
-      <div className="flex gap-2"><PasswordInput placeholder="Min 8 characters, letters + numbers" value={pw} onChange={(e) => setPw(e.target.value)} testid="ud-new-password-input" />
+      <div className="flex gap-2"><PasswordInput wrapperClassName="flex-1" placeholder="Min 8 characters, letters + numbers" value={pw} onChange={(e) => setPw(e.target.value)} testid="ud-new-password-input" />
         <button className="btn-gold shrink-0" disabled={busy || pw.length < 8} onClick={save} data-testid="ud-set-password-btn">Set password</button></div></div>
   );
 }

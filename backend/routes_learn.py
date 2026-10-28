@@ -95,6 +95,8 @@ class WebinarIn(BaseModel):
     host: str = Field(max_length=80)
     duration: str = Field(max_length=30)
     video_url: str = Field(max_length=300)
+    video_url_bn: str = Field(default="", max_length=300)
+    video_url_hi: str = Field(default="", max_length=300)
     description: str = Field(max_length=2000)
     highlights: list[str] = Field(max_length=8)
     cta_text: str = Field(min_length=2, max_length=60)
@@ -115,7 +117,7 @@ async def admin_webinar(admin=Depends(require_admin)):
 
 async def send_webinar_reminders():
     w = await db.webinar_config.find_one({"key": "main"}, P0)
-    if not w or not w.get("enabled") or not w.get("video_id") or not w.get("reminder_enabled", True):
+    if not w or not w.get("enabled") or not (w.get("video_id") or w.get("video_id_bn") or w.get("video_id_hi")) or not w.get("reminder_enabled", True):
         return 0
     cutoff = iso(now() - timedelta(hours=w.get("reminder_hours", 24)))
     q = {"role": "user", "status": "active", "deleted": {"$ne": True}, "created_at": {"$lte": cutoff},
@@ -137,6 +139,8 @@ async def save_webinar(b: WebinarIn, request: Request, admin=Depends(require_adm
     d = {k: strip_html(v) if isinstance(v, str) else v for k, v in b.model_dump().items()}
     d["highlights"] = [strip_html(h) for h in b.highlights if h.strip()]
     d["video_id"] = video_id(b.video_url)
+    d["video_id_bn"] = video_id(b.video_url_bn)
+    d["video_id_hi"] = video_id(b.video_url_hi)
     await db.webinar_config.update_one({"key": "main"}, {"$set": d}, upsert=True)
     await audit(admin, "webinar.update", "webinar", "main", {"video_id": d["video_id"], "enabled": b.enabled, "required": b.required}, client_ip(request))
     return await db.webinar_config.find_one({"key": "main"}, P0)
@@ -161,6 +165,8 @@ class GuideIn(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
     description: str = Field(max_length=400)
     video_url: str = Field(max_length=300)
+    video_url_bn: str = Field(default="", max_length=300)
+    video_url_hi: str = Field(default="", max_length=300)
     icon: str
     steps: list[str] = Field(max_length=12)
     order: int = 0
@@ -173,6 +179,8 @@ def guide_doc(b: GuideIn):
     d = {k: strip_html(v) if isinstance(v, str) else v for k, v in b.model_dump().items()}
     d["steps"] = [strip_html(s) for s in b.steps if s.strip()]
     d["video_id"] = video_id(b.video_url)
+    d["video_id_bn"] = video_id(b.video_url_bn)
+    d["video_id_hi"] = video_id(b.video_url_hi)
     return d
 
 

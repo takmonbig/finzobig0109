@@ -132,7 +132,7 @@ async def admin_set_password(user_id: str, b: SetPwIn, request: Request, admin=D
     check_password_strength(b.new_password)
     await db.users.update_one({"id": user_id}, {"$set": {"password_hash": hash_password(b.new_password), "password_changed_at": iso()}})
     await db.sessions.update_many({"user_id": user_id, "revoked": False}, {"$set": {"revoked": True, "revoked_reason": "admin_password_reset"}})
-    idents = [re.escape(u["email"]) + "$"] + ([re.escape(f"{u['country_code']}{u['mobile']}") + "$"] if u.get("mobile") else [])
+    idents = [":" + re.escape(u["email"]) + "$"] + ([":" + re.escape(f"{u['country_code']}{u['mobile']}") + "$"] if u.get("mobile") else [])
     await db.login_attempts.delete_many({"identifier": {"$regex": "|".join(idents)}})
     await security_event("admin_password_reset", user_id, client_ip(request), {"by": admin["email"]}, "warning")
     await audit(admin, "user.password_reset", "user", user_id, {}, client_ip(request))

@@ -1,0 +1,34 @@
+{
+  "summary": "Retest of the iteration 7 fixes only. All 7 items pass. Backend: new test_iter8_retest.py has 6 tests and all 6 pass when run with -n 0. Frontend: switching hi->bn->en works and the googtrans cookies are set on all 4 domain levels, then cleared. At 390px the lang-switcher shows in the mobile menu, /login and /register. The welcome tour is hidden on /app/webinar, shows on /app and does not come back after Done. The admin 'Set a new password' field is a password input with a working reveal toggle and setting the password works. Admin reset clears a mobile lockout (429 before, 200 after). Members with 0/0 show rank_progress 0. /admin stays English even when lang=bn is set. Email and mobile login still work.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/register", "issue": "Rate limit is 10 per IP per hour. Running the test suites again quickly hits 429 in the register fixtures. This is by design but makes regression runs flaky; the tester cleared db.rate_limits register:* keys."},
+      {"endpoint": "/api/auth/login lockout", "issue": "One run of the email-lockout test got 200 instead of 429 on the 6th attempt; the next run passed. The lockout key is ip:identifier and egress IPs can change (two IPs seen in rate_limits), so lock counts can split across IPs. Not reproduced when run alone."},
+      {"endpoint": "/api/admin/users/{id}/password", "issue": "The login_attempts regex is '<email>$', so it also clears records for addresses that end with this email (e.g. xtest@x.com). Low impact."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Public navbar (desktop, Bengali/Hindi)", "issues": ["Translated nav labels wrap onto 2 lines and the 'Create account' CTA looks cramped or cut off at the right edge at 1920px"]},
+      {"screen": "Admin user dialog - Set a new password", "issues": ["The PasswordInput wrapper div has no flex-1, so the input stays about 231px wide inside the flex row. Add className flex-1 on the wrapper or let PasswordInput take a wrapperClassName."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iter8_retest.py", "/app/test_reports/pytest/pytest_iter8.xml"],
+  "action_items": [
+    "(Minor) Make the ud-new-password-input wrapper flex-1 so it fills the row",
+    "(Minor) Tighten the public navbar for long translated labels (whitespace-nowrap or a smaller gap, or collapse to the menu earlier)",
+    "(Minor) Anchor the email regex in admin_set_password with ':' + email + '$'"
+  ],
+  "critical_code_review_comments": [
+    "test_iter7_auth_admin.py: run sequentially (-n 0), TestAdminChangeOwnPassword revokes the module-scoped admin session, so the later Progress/DownlineExport tests get 401. This is a test-order problem, not a product bug. Use a fresh admin login per class. Under xdist, files that call login_attempts.delete_many({}) interfere with each other; run the auth suites with -n 0."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter8_retest.py"],
+  "success_rate": {"backend": "100% (6/6 in test_iter8_retest.py)", "frontend": "100% of listed retest items"},
+  "seed_data_creation": "None kept. TEST_ users deleted along with their records. db.login_attempts and the register:* keys in db.rate_limits cleared. Admin and demo passwords unchanged (verified with 200 logins).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run the auth suites with -n 0; pytest.ini sets xdist -n, and parallel workers that clear login_attempts collide. The register rate limit is 10/IP/hour, so clear db.rate_limits {key:/^register:/} between runs. GT cookies were confirmed on host, .host, .preview.emergentagent.com and .emergentagent.com."
+}
