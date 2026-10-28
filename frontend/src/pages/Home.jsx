@@ -5,6 +5,7 @@ import { Hero, Benefits, HowItWorks, Trading } from "@/components/home/Sections"
 import { PlansSection, TeamDiagram, RewardsSection, FAQ } from "@/components/home/Interactive";
 import { TeamBonus } from "@/components/home/TeamBonus";
 import { TeamMembers, CoinRateSection } from "@/components/home/TeamRate";
+import { ReferralBonus } from "@/components/home/ReferralBonus";
 
 export default function Home() {
   const { data: site, isLoading } = useSite();
@@ -23,6 +24,7 @@ export default function Home() {
       <CoinRateSection rate={c.coin_rate} coin={site?.settings?.coin} />
       <TeamDiagram ranks={ranks.data?.ranks || []} />
       <TeamBonus ranks={ranks.data?.ranks || []} commission={ranks.data?.commission_bp || {}} />
+      <ReferralBonus amounts={site?.settings?.referral_rewards} symbol={site?.settings?.coin?.symbol} />
       <RewardsSection rewards={rewards.data || []} />
       <TeamMembers members={c.team_members} />
       <FAQ items={c.faqs} />

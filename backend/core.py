@@ -59,6 +59,7 @@ DEFAULT_SETTINGS = {
     "coin": {"name": "Finzo Coin", "symbol": "FZC", "decimals": 2, "rates": {"USD": 100}, "history": []},
     "simulation_day_seconds": 86400,
     "signup_demo_grant": 10000,
+    "referral_rewards": {"friend_signup": 50, "friend_webinar": 50, "own_webinar": 20},
     "session_timeout_minutes": 60,
     "maintenance_mode": False,
     "features": {"deposits": True, "withdrawals": True, "plans": True, "team_messages": True, "rewards": True, "push": True},
@@ -178,6 +179,7 @@ ACCOUNTS = {
     "sim_earnings": "Plan earnings (coins, not withdrawable)",
     "verified": "USDT balance",
     "promo": "Promotional credits",
+    "referral_coins": "Referral reward coins (not withdrawable)",
 }
 
 
@@ -227,6 +229,22 @@ async def release(user_id, account, amount):
 async def wallets_of(user_id):
     rows = await db.wallet_accounts.find({"user_id": user_id}, {"_id": 0}).to_list(10)
     return {r["account"]: {"balance": r["balance"], "reserved": r["reserved"], "available": r["balance"] - r["reserved"], "label": ACCOUNTS[r["account"]]} for r in rows}
+
+
+REWARD_LABELS = {"friend_signup": "A friend joined with your link", "friend_webinar": "Your friend finished the welcome webinar",
+                 "own_webinar": "You finished the welcome webinar"}
+
+
+async def award_coins(user_id, action, source_user_id=None):
+    s = await get_settings()
+    amt = int((s.get("referral_rewards") or {}).get(action, 0)) * 100
+    if amt <= 0:
+        return
+    await ensure_wallets(user_id)
+    e = await post_ledger(user_id, "referral_coins", amt, "coin_reward", REWARD_LABELS[action], ref=source_user_id,
+                          idem_key=f"coinrw:{action}:{user_id}:{source_user_id or ''}")
+    if e:
+        await db.coin_rewards.insert_one({"id": uid(), "user_id": user_id, "action": action, "source_user_id": source_user_id, "amount": amt, "created_at": iso()})
 
 
 # ---------------- ranks / commissions ----------------

@@ -12,7 +12,7 @@ import { Glass, PageHeader, Loader, Empty, ErrorBox, StatusBadge, Field, Pager, 
 
 const get = (url, params) => api.get(url, { params }).then((r) => r.data);
 
-const ACC_LABEL = { all: "All", verified: "USDT", demo_coins: "Coins", sim_earnings: "Plan earnings", promo: "Promo" };
+const ACC_LABEL = { all: "All", verified: "USDT", demo_coins: "Coins", sim_earnings: "Plan earnings", promo: "Promo", referral_coins: "Referral coins" };
 
 function Wallet() {
   const [account, setAccount] = useState("");

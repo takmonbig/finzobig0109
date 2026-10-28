@@ -6,7 +6,7 @@ import { Menu, X, ShieldAlert } from "lucide-react";
 import { useSite } from "@/components/common";
 import { useAuth } from "@/context/AuthContext";
 
-const NAV = [["Benefits", "/#benefits"], ["Plans", "/#plans"], ["How it works", "/#how"], ["Markets", "/#markets"], ["Team", "/#team"], ["Team bonus", "/#team-bonus"], ["Rewards", "/#rewards"], ["FAQ", "/#faq"]];
+const NAV = [["Benefits", "/#benefits"], ["Plans", "/#plans"], ["How it works", "/#how"], ["Markets", "/#markets"], ["Team", "/#team"], ["Team bonus", "/#team-bonus"], ["Referral bonus", "/#referral-bonus"], ["Rewards", "/#rewards"], ["FAQ", "/#faq"]];
 const FOOT = [["About Us", "about"], ["Contact", "contact"], ["Support", "support"], ["Privacy Policy", "privacy"], ["Terms and Conditions", "terms"], ["Risk Disclosure", "risk"],
   ["Refund Policy", "refund"], ["Complaint Resolution", "complaints"], ["Cookie Preferences", "cookies"], ["Company Information", "company"]];
 

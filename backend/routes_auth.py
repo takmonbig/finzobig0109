@@ -62,6 +62,9 @@ def set_cookies(response, access, refresh=None):
         response.set_cookie("refresh_token", refresh, httponly=True, secure=True, samesite="none", max_age=REFRESH_DAYS * 86400, path="/")
 
 
+from core import award_coins  # noqa: E402
+
+
 @router.post("/register")
 async def register(body: RegisterIn, request: Request, response: Response):
     ip = client_ip(request)
@@ -99,6 +102,8 @@ async def register(body: RegisterIn, request: Request, response: Response):
     s = await get_settings()
     await post_ledger(user["id"], "demo_coins", int(s["signup_demo_grant"]) * 100, "signup_grant", "Welcome coins", idem_key=f"grant:{user['id']}")
     await recompute_ancestors(user)
+    if referrer:
+        await award_coins(referrer["id"], "friend_signup", user["id"])
     return await start_session(user, request, response)
 
 

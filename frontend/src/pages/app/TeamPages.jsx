@@ -12,6 +12,8 @@ import { api, coins, errMsg, fdate, downloadCsv } from "@/lib/api";
 import { Glass, PageHeader, Stat, Loader, Empty, ErrorBox, StatusBadge, Field, Pager, RankBadge, ImageUpload, DemoTag } from "@/components/common";
 import { TT, ChartCard } from "@/pages/app/UserPages";
 
+const EARN = { friend_signup: "Friend joined", friend_webinar: "Friend webinar", own_webinar: "Own webinar" };
+
 const get = (url, params) => api.get(url, { params }).then((r) => r.data);
 const RANKS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"];
 
@@ -108,10 +110,11 @@ function Members() {
         <select className={sel} value={f.rank} onChange={(e) => setF({ ...f, rank: e.target.value, page: 1 })} data-testid="team-rank-filter"><option value="">All ranks</option>{["Member", ...RANKS].map((r) => <option key={r}>{r}</option>)}</select>
         <button className="btn-ghost" onClick={() => downloadCsv("/team/export", "team.csv").catch((e) => toast.error(errMsg(e)))} data-testid="team-export-btn"><Download className="w-4 h-4" />Export</button>
       </div>
-      {isLoading ? <Loader /> : data.items.length ? <div className="overflow-x-auto"><table className="tbl" data-testid="team-table"><thead><tr><th>Name</th><th>Generation</th><th>Rank</th><th>Joined</th><th>Status</th></tr></thead>
-        <tbody>{data.items.map((m) => <tr key={m.id}><td>{m.name}</td><td className="font-num">{m.generation}</td><td><RankBadge rank={m.rank} /></td><td>{m.joined}</td><td><StatusBadge status={m.status} /></td></tr>)}</tbody></table></div> : <Empty title="No members match" />}
+      {isLoading ? <Loader /> : data.items.length ? <div className="overflow-x-auto"><table className="tbl" data-testid="team-table"><thead><tr><th>Name</th><th>Generation</th><th>Rank</th><th>Joined</th><th>Coins earned</th><th>How earned</th><th>Activity</th></tr></thead>
+        <tbody>{data.items.map((m) => <tr key={m.id}><td>{m.name}</td><td className="font-num">{m.generation}</td><td><RankBadge rank={m.rank} /></td><td>{m.joined}</td><td className="font-num text-emerald-300" data-testid={`member-coins-${m.id}`}>{coins(m.coins_earned || 0)}</td>
+          <td className="text-xs">{Object.keys(m.earned_by || {}).length ? Object.entries(m.earned_by).map(([k, v]) => <p key={k}>{EARN[k] || k}: {coins(v)}</p>) : "—"}</td><td><StatusBadge status={m.activity} /></td></tr>)}</tbody></table></div> : <Empty title="No members match" />}
       {data && <Pager page={f.page} size={15} total={data.total} onPage={(p) => setF({ ...f, page: p })} />}
-      <p className="text-xs text-slate-500 mt-3">Privacy: names beyond generation 1 are masked. Contact details, financial records and login history of team members are never shown.</p>
+      <p className="text-xs text-slate-500 mt-3">Privacy: names beyond generation 1 are masked. Activity shows whether a member was active in the last 7 days. Contact details, deposits, balances and login history of team members are never shown.</p>
     </Glass>
   );
 }

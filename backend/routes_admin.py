@@ -807,6 +807,24 @@ async def update_content(key: str, b: ContentIn, request: Request, admin=Depends
     return {"ok": True}
 
 
+@router.get("/coin-rewards")
+async def admin_coin_rewards(q: str | None = None, page: int = 1, size: int = 25, admin=Depends(require_admin)):
+    page, size = page_args(page, size)
+    query = {}
+    if q:
+        ids = [u["id"] for u in await db.users.find({"$or": [{"email": {"$regex": re.escape(q), "$options": "i"}}, {"full_name": {"$regex": re.escape(q), "$options": "i"}}]}, {"_id": 0, "id": 1}).to_list(1000)]
+        query = {"$or": [{"user_id": {"$in": ids}}, {"source_user_id": {"$in": ids}}]}
+    res = await paged(db.coin_rewards, query, page, size)
+    uids = {x for r in res["items"] for x in (r["user_id"], r.get("source_user_id")) if x}
+    users = {u["id"]: u for u in await db.users.find({"id": {"$in": list(uids)}}, {"_id": 0, "id": 1, "full_name": 1, "email": 1}).to_list(1000)}
+    for r in res["items"]:
+        r["user"] = users.get(r["user_id"])
+        r["source"] = users.get(r.get("source_user_id"))
+    tot = await db.coin_rewards.aggregate([{"$group": {"_id": "$action", "n": {"$sum": "$amount"}, "c": {"$sum": 1}}}]).to_list(10)
+    res["totals"] = {t["_id"]: {"amount": t["n"], "count": t["c"]} for t in tot}
+    return res
+
+
 class MemberIn(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     role: str = Field(min_length=2, max_length=80)
@@ -843,7 +861,7 @@ async def set_coin_rate(b: RateIn, request: Request, admin=Depends(require_admin
 
 
 SETTING_KEYS = {"site_name", "logo_url", "favicon_url", "theme", "contact", "company_info", "telegram", "coin", "simulation_day_seconds", "signup_demo_grant",
-                "session_timeout_minutes", "maintenance_mode", "features", "withdrawal", "team_message_daily_limit"}
+                "session_timeout_minutes", "maintenance_mode", "features", "withdrawal", "team_message_daily_limit", "referral_rewards"}
 
 
 @router.get("/settings")
@@ -874,6 +892,14 @@ async def update_settings(body: dict, request: Request, admin=Depends(require_ad
     for k in ("logo_url", "favicon_url"):
         if upd.get(k):
             upd[k] = safe_url(upd[k])
+    if "referral_rewards" in upd:
+        rr = upd["referral_rewards"]
+        try:
+            upd["referral_rewards"] = {k: int(rr.get(k, 0)) for k in ("friend_signup", "friend_webinar", "own_webinar")}
+        except (TypeError, ValueError, AttributeError):
+            raise HTTPException(400, "Reward amounts must be whole numbers")
+        if any(v < 0 or v > 100000 for v in upd["referral_rewards"].values()):
+            raise HTTPException(400, "Reward amounts must be between 0 and 100000 coins")
     if "simulation_day_seconds" in upd and int(upd["simulation_day_seconds"]) < 60:
         raise HTTPException(400, "Plan day must be at least 60 seconds")
     await db.system_settings.update_one({"key": "global"}, {"$set": upd})

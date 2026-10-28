@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { LayoutDashboard, Wallet, Layers, ArrowDownToLine, ArrowUpFromLine, Network, Trophy, Bell, Megaphone, LifeBuoy, UserCog, Users, CreditCard, Gift,
-  FileText, Settings, ScrollText, ShieldCheck, Landmark, MessageSquareWarning, PlayCircle, Video, Target, CalendarDays, UsersRound } from "lucide-react";
+  FileText, Settings, ScrollText, ShieldCheck, Landmark, MessageSquareWarning, PlayCircle, Video, Target, CalendarDays, UsersRound, Coins } from "lucide-react";
 import { api } from "@/lib/api";
 import { initPixels, track } from "@/lib/pixel";
 import { LanguagePicker } from "@/components/Onboarding";
@@ -32,6 +32,8 @@ const L = lazy(() => import("@/pages/app/Learn"));
 const AL = lazy(() => import("@/pages/admin/AdminLearn"));
 const ACT = lazy(() => import("@/pages/app/Activity"));
 const ATR = lazy(() => import("@/pages/admin/AdminTeamRate"));
+const CR = lazy(() => import("@/pages/app/CoinRewards"));
+const ACR = lazy(() => import("@/pages/admin/AdminCoinRewards"));
 
 function PixelTracker() {
   const loc = useLocation();
@@ -47,6 +49,7 @@ const USER_NAV = [
   { to: "/app", label: "Overview", icon: LayoutDashboard, end: true }, { to: "/app/wallet", label: "Wallet & ledger", icon: Wallet },
   { to: "/app/deposit", label: "Deposit", icon: ArrowDownToLine }, { to: "/app/activity", label: "Activity calendar", icon: CalendarDays },
   { to: "/app/withdraw", label: "Withdrawal", icon: ArrowUpFromLine }, { to: "/app/team", label: "My team", icon: Network },
+  { to: "/app/coin-rewards", label: "Coin rewards", icon: Coins },
   { to: "/app/rewards", label: "Rewards", icon: Trophy }, { to: "/app/notifications", label: "Notifications", icon: Bell },
   { to: "/app/announcements", label: "Team announcements", icon: Megaphone }, { to: "/app/support", label: "Support", icon: LifeBuoy },
   { to: "/app/profile", label: "Profile & security", icon: UserCog }, { to: "/app/webinar", label: "Welcome webinar", icon: Video },
@@ -62,6 +65,7 @@ const ADMIN_NAV = [
   { to: "/admin/settings", label: "System settings", icon: Settings }, { to: "/admin/logs", label: "Audit & security", icon: ScrollText },
   { to: "/admin/learn", label: "Webinar & guides", icon: Video }, { to: "/admin/pixels", label: "Meta Pixels", icon: Target },
   { to: "/admin/team-rate", label: "Team section & coin rate", icon: UsersRound },
+  { to: "/admin/coin-rewards", label: "Coin rewards", icon: Coins },
 ];
 
 function Guard({ role, children }) {
@@ -93,6 +97,7 @@ function AppRoutes() {
         <Route path="wallet" element={S(<F page="wallet" />)} />
         <Route path="plans" element={<Navigate to="/app/deposit" replace />} />
         <Route path="activity" element={S(<ACT />)} />
+        <Route path="coin-rewards" element={S(<CR />)} />
         <Route path="deposit" element={S(<F page="deposit" />)} />
         <Route path="withdraw" element={S(<F page="withdraw" />)} />
         <Route path="team" element={S(<T page="team" />)} />
@@ -123,6 +128,7 @@ function AppRoutes() {
         <Route path="learn" element={S(<AL page="learn" />)} />
         <Route path="pixels" element={S(<AL page="pixels" />)} />
         <Route path="team-rate" element={S(<ATR />)} />
+        <Route path="coin-rewards" element={S(<ACR />)} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

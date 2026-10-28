@@ -50,7 +50,7 @@ async def feature_on(name):
 async def public_site():
     s = await get_settings()
     content = await db.website_content.find({}, P0).to_list(100)
-    keys = ["site_name", "logo_url", "favicon_url", "theme", "demo_mode", "real_money_enabled", "contact", "company_info", "telegram", "coin", "maintenance_mode", "features"]
+    keys = ["site_name", "logo_url", "favicon_url", "theme", "demo_mode", "real_money_enabled", "contact", "company_info", "telegram", "coin", "maintenance_mode", "features", "referral_rewards"]
     return {"settings": {k: s[k] for k in keys}, "content": {c["key"]: c["value"] for c in content}}
 
 
@@ -217,10 +217,35 @@ def mask_name(n):
     return " ".join(p[0] + "*" * max(len(p) - 1, 1) if i else p for i, p in enumerate(parts)) or "Member"
 
 
-def member_view(m, me):
+MEMBER_PROJ = {"_id": 0, "id": 1, "full_name": 1, "rank": 1, "created_at": 1, "ancestors": 1, "referral_code": 1, "status": 1, "last_active_at": 1}
+
+
+async def coin_stats(ids):
+    out = {}
+    for r in await db.coin_rewards.aggregate([{"$match": {"user_id": {"$in": ids}}}, {"$group": {"_id": {"u": "$user_id", "a": "$action"}, "n": {"$sum": "$amount"}}}]).to_list(100000):
+        out.setdefault(r["_id"]["u"], {})[r["_id"]["a"]] = r["n"]
+    return out
+
+
+def member_view(m, me, cs=None):
     gen = m["ancestors"].index(me) + 1
+    by = (cs or {}).get(m["id"], {})
+    la = m.get("last_active_at")
     return {"id": m["id"], "name": m["full_name"] if gen == 1 else mask_name(m["full_name"]), "rank": m.get("rank", "Member"), "generation": gen,
-            "joined": m["created_at"][:10], "referral_code": m["referral_code"] if gen == 1 else None, "status": m.get("status"), "parent_id": m["ancestors"][0]}
+            "joined": m["created_at"][:10], "referral_code": m["referral_code"] if gen == 1 else None, "status": m.get("status"), "parent_id": m["ancestors"][0],
+            "coins_earned": sum(by.values()), "earned_by": by, "activity": "active" if la and la >= iso(now() - timedelta(days=7)) else "inactive"}
+
+
+@router.get("/coin-rewards")
+async def my_coin_rewards(user=Depends(get_current_user)):
+    by = (await coin_stats([user["id"]])).get(user["id"], {})
+    hist = await db.coin_rewards.find({"user_id": user["id"]}, P0).sort("created_at", -1).to_list(200)
+    ids = [h["source_user_id"] for h in hist if h.get("source_user_id")]
+    names = {u["id"]: u["full_name"] for u in await db.users.find({"id": {"$in": ids}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(1000)}
+    for h in hist:
+        h["from"] = names.get(h.get("source_user_id"))
+    s = await get_settings()
+    return {"total": sum(by.values()), "by_action": by, "history": hist, "amounts": s.get("referral_rewards", {})}
 
 
 @router.get("/team/summary")
@@ -246,8 +271,9 @@ async def team_summary(user=Depends(get_current_user)):
 @router.get("/team/tree")
 async def team_tree(user=Depends(get_current_user)):
     me = user["id"]
-    rows = await db.users.find({"$or": [{f"ancestors.{i}": me} for i in range(5)], "deleted": {"$ne": True}}, {"_id": 0, "id": 1, "full_name": 1, "rank": 1, "created_at": 1, "ancestors": 1, "referral_code": 1, "status": 1}).to_list(5000)
-    nodes = [member_view(r, me) for r in rows]
+    rows = await db.users.find({"$or": [{f"ancestors.{i}": me} for i in range(5)], "deleted": {"$ne": True}}, MEMBER_PROJ).to_list(5000)
+    cs = await coin_stats([r["id"] for r in rows])
+    nodes = [member_view(r, me, cs) for r in rows]
     by_parent = {}
     for n in nodes:
         by_parent.setdefault(n["parent_id"], []).append(n)
@@ -267,8 +293,9 @@ async def team_members(generation: int | None = None, q: str | None = None, rank
         query["rank"] = rank
     if q:
         query["full_name"] = {"$regex": re.escape(q), "$options": "i"}
-    res = await paged(db.users, query, page, size, proj={"_id": 0, "id": 1, "full_name": 1, "rank": 1, "created_at": 1, "ancestors": 1, "referral_code": 1, "status": 1})
-    res["items"] = [member_view(m, me) for m in res["items"]]
+    res = await paged(db.users, query, page, size, proj=MEMBER_PROJ)
+    cs = await coin_stats([m["id"] for m in res["items"]])
+    res["items"] = [member_view(m, me, cs) for m in res["items"]]
     return res
 
 
