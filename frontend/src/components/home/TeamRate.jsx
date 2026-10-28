@@ -26,7 +26,7 @@ const usd = (v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigi
 
 export function CoinRateCard({ rate, name = "Finzo Coin", symbol = "FZC" }) {
   if (!rate?.price_usd) return null;
-  const h = (rate.history || []).map((p) => ({ d: p.at.slice(5, 10), v: p.price_usd }));
+  const h = (rate.history || []).map((p) => ({ d: new Date(p.at).toLocaleString([], { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }), v: p.price_usd }));
   const prev = h.length > 1 ? h[h.length - 2].v : h[0]?.v;
   const chg = prev ? ((rate.price_usd - prev) / prev) * 100 : 0;
   return (

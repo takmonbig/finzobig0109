@@ -68,6 +68,7 @@ MONGO_URL, DB_NAME, CORS_ORIGINS, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_
 - Welcome tour (6 steps) for new members; admin "Rank & reward progress" report.
 - Webinar + guides: separate YouTube links per language (en/bn/hi) with a video-language switch defaulting to site language.
 - Declined: deposit-based referral income (10/2/1%), founder profiles from unverified photos/bios, admin-controlled "live" Finzo Coin price chart.
+- 2026-10-28: Admin "Team section & coin rate" page (/admin/team-rate): team members (name, position, bio, photo upload) shown on landing page only when added; admin-published Finzo Coin rate + volume with history chart on landing page and user overview, labelled "Rate set and controlled by Finzo.cc"; footer "Trading control by Finzo.cc". Deposit-based referral income still declined (even as experiment).
 
 ## Backlog
 - P0: real email provider (Resend) for password reset; real SMS OTP provider.
