@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { InstallButton, TrustBadge } from "@/components/Pwa";
+import { LangSwitcher } from "@/components/Onboarding";
 import { Menu, X, ShieldAlert } from "lucide-react";
 import { useSite } from "@/components/common";
 import { useAuth } from "@/context/AuthContext";
@@ -27,6 +28,7 @@ function TopNav({ name }) {
           {NAV.map(([l, h]) => <a key={h} href={h} className="hover:text-amber-300 transition-colors" data-testid={`nav-${l.toLowerCase().replace(/ /g, "-")}`}>{l}</a>)}
         </nav>
         <div className="hidden lg:flex items-center gap-3">
+          <LangSwitcher />
           <InstallButton />
           {user ? <Link to={dash} className="btn-gold" data-testid="nav-dashboard-btn">Open dashboard</Link> : (<>
             <Link to="/login" className="text-sm text-slate-300 hover:text-white" data-testid="nav-login-btn">Sign in</Link>

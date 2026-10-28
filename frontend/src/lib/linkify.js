@@ -1,4 +1,5 @@
-const TOKEN = /(?<![@\w.-])((?:https?:\/\/)[^\s<>"'`]+|www\.[^\s<>"'`]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?::\d{2,5})?(?:\/[^\s<>"'`]*)?)/gi;
+const TOKEN = /((?:https?:\/\/)[^\s<>"'`]+|www\.[^\s<>"'`]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?::\d{2,5})?(?:\/[^\s<>"'`]*)?)/gi;
+const PREV_BLOCK = /[@\w.-]/;
 const TRAIL = /[.,!?;:)\]]+$/;
 
 export function normalizeUrl(raw) {
@@ -31,6 +32,7 @@ export function tokenize(text) {
   let last = 0;
   for (const m of s.matchAll(TOKEN)) {
     let raw = m[0];
+    if (m.index > 0 && PREV_BLOCK.test(s[m.index - 1])) continue;
     const trail = raw.match(TRAIL)?.[0] || "";
     raw = raw.slice(0, raw.length - trail.length);
     const href = normalizeUrl(raw);

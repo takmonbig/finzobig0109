@@ -48,7 +48,10 @@ function TreeRow({ n, depth, open, onToggle }) {
 
 function Summary({ s }) {
   const [anim, setAnim] = useState(true);
-  const link = `${window.location.origin}/register?ref=${s.referral_code}`;
+  const link = `${window.location.origin}/r/${s.referral_code}`;
+  const msg = encodeURIComponent(`Join me on Finzo.cc — sign up with my referral link: ${link}`);
+  const copy = async () => { try { await navigator.clipboard.writeText(link); toast.success("Referral link copied"); } catch { toast.error("Copy failed — long-press the link to copy"); } };
+  const share = () => (navigator.share ? navigator.share({ title: "Join Finzo.cc", text: "Sign up with my referral link", url: link }).catch(() => {}) : copy());
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -59,8 +62,13 @@ function Summary({ s }) {
         </motion.div>
       </div>
       <Glass className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <div className="flex-1 min-w-0"><p className="text-sm text-slate-400">Your referral link</p><p className="font-num text-amber-200 text-sm break-all" data-testid="referral-link">{link}</p></div>
-        <button className="btn-ghost" onClick={() => { navigator.clipboard.writeText(link); toast.success("Referral link copied"); }} data-testid="copy-referral-btn"><Share2 className="w-4 h-4" />Copy link</button>
+        <div className="flex-1 min-w-0"><p className="text-sm text-slate-400">Your referral link · code <span className="font-num text-white" data-testid="referral-code">{s.referral_code}</span></p><p className="font-num text-amber-200 text-sm break-all" data-testid="referral-link">{link}</p></div>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-ghost !py-2" onClick={copy} data-testid="copy-referral-btn"><Share2 className="w-4 h-4" />Copy</button>
+          <a className="btn-ghost !py-2" href={`https://wa.me/?text=${msg}`} target="_blank" rel="noopener noreferrer" data-testid="share-whatsapp-btn">WhatsApp</a>
+          <a className="btn-ghost !py-2" href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Join me on Finzo.cc")}`} target="_blank" rel="noopener noreferrer" data-testid="share-telegram-btn">Telegram</a>
+          <button className="btn-gold !py-2" onClick={share} data-testid="share-native-btn">Share</button>
+        </div>
       </Glass>
       <div className="grid lg:grid-cols-2 gap-5">
         <ChartCard title="Generation structure" testid="chart-generations"><ResponsiveContainer><BarChart data={s.generations.map((v, i) => ({ g: `Gen ${i + 1}`, v }))}>

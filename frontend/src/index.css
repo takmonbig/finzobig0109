@@ -89,4 +89,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .animated-gradient { animation: none; } html { scroll-behavior: auto; } }
 html, body, #root { max-width: 100%; overflow-x: hidden; }
+.goog-te-banner-frame, iframe.skiptranslate, .goog-te-balloon-frame, #goog-gt-tt, .VIpgJd-ZVi9od-ORHb-OEVmcd { display: none !important; }
+body { top: 0 !important; }
+font[style] { background: transparent !important; box-shadow: none !important; }
 @supports (overflow: clip) { html, body, #root { overflow-x: clip; } }

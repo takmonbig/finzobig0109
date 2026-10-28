@@ -13,6 +13,7 @@ import { LinkText, ExternalPreview, RankBadge } from "@/components/common";
 import { Logo } from "@/components/PublicLayout";
 import { InstallButton, InstallPopup, TrustBadge } from "@/components/Pwa";
 import { WebinarGate } from "@/pages/app/Learn";
+import { LangSwitcher, WelcomeTour } from "@/components/Onboarding";
 
 function useRealtime(enabled) {
   const qc = useQueryClient();
@@ -123,7 +124,7 @@ export default function AppShell({ items, area }) {
   const unread = useQuery({ queryKey: ["unread"], queryFn: () => api.get("/notifications", { params: { size: 1 } }).then((r) => r.data.unread), refetchInterval: 60000 });
   const doLogout = async () => { await logout(); nav("/login"); };
   return (
-    <div className="min-h-screen mesh-bg flex text-slate-200">
+    <div className={`min-h-screen mesh-bg flex text-slate-200 ${area === "admin" ? "notranslate" : ""}`} translate={area === "admin" ? "no" : undefined}>
       <aside className={`hidden lg:flex flex-col sticky top-0 h-screen bg-[#070A12]/95 backdrop-blur-2xl border-r border-slate-800/80 p-4 transition-[width] duration-300 ${collapsed ? "w-[76px]" : "w-64"}`} data-testid="sidebar">
         <div className="flex items-center justify-between mb-8">{!collapsed && <Logo />}
           <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400" data-testid="sidebar-collapse-btn" aria-label="Collapse sidebar"><ChevronsLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} /></button>
@@ -143,6 +144,7 @@ export default function AppShell({ items, area }) {
           <button className="lg:hidden p-2 -ml-2" onClick={() => setMobile(true)} data-testid="mobile-nav-toggle" aria-label="Open menu"><Menu className="w-5 h-5" /></button>
           {area === "admin" && <span className="text-[11px] uppercase tracking-widest px-2.5 py-1 rounded-full border border-amber-400/40 text-amber-200">Super Admin</span>}
           <div className="flex-1" />
+          {area === "user" && <LangSwitcher />}
           <InstallButton />
           <Link to={area === "admin" ? "/admin/campaigns" : "/app/notifications"} className="relative p-2 rounded-xl hover:bg-slate-800" data-testid="topbar-notifications-btn" aria-label="Notifications">
             <Bell className="w-5 h-5" />
@@ -160,6 +162,7 @@ export default function AppShell({ items, area }) {
         <footer className="px-4 py-4 flex justify-center border-t border-slate-800/60"><TrustBadge /></footer>
         {area === "user" && <InstallPopup />}
         {area === "user" && <WebinarGate />}
+        {area === "user" && user && <WelcomeTour user={user} />}
       </div>
       <PopupAnnouncements />
     </div>

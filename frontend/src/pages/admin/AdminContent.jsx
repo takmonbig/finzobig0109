@@ -8,7 +8,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { api, coins, errMsg, fdate } from "@/lib/api";
-import { Glass, PageHeader, Loader, Empty, ErrorBox, StatusBadge, Field, ImageUpload, LinkText, DemoTag } from "@/components/common";
+import { Glass, PageHeader, Loader, Empty, ErrorBox, StatusBadge, Field, ImageUpload, LinkText, DemoTag, PasswordInput } from "@/components/common";
+
+function MyPassword() {
+  const [pw, setPw] = useState({ current_password: "", new_password: "" });
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    setBusy(true);
+    try { await api.post("/auth/change-password", pw); toast.success("Your password was changed. Other devices were signed out."); setPw({ current_password: "", new_password: "" }); } catch (e) { toast.error(errMsg(e)); }
+    setBusy(false);
+  };
+  return (
+    <Glass className="mb-5" data-testid="admin-my-password"><h3 className="font-semibold text-white mb-3">Change my password</h3>
+      <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <PasswordInput placeholder="Current password" value={pw.current_password} onChange={(e) => setPw({ ...pw, current_password: e.target.value })} testid="admin-current-password" />
+        <PasswordInput placeholder="New password" value={pw.new_password} onChange={(e) => setPw({ ...pw, new_password: e.target.value })} testid="admin-new-password" />
+        <button className="btn-gold" disabled={busy || !pw.current_password || pw.new_password.length < 8} onClick={save} data-testid="admin-change-password-btn">Update</button></div></Glass>
+  );
+}
 import { get, sel } from "@/pages/admin/AdminCore";
 
 const useSave = (key, ok) => {
@@ -255,6 +272,7 @@ function Settings() {
   return (
     <div data-testid="admin-settings-page">
       <PageHeader title="System settings" actions={<button className="btn-gold" disabled={busy} onClick={save} data-testid="settings-save-btn">Save all settings</button>} />
+      <MyPassword />
       <div className="grid lg:grid-cols-2 gap-5">
         <Glass className="space-y-3"><h3 className="font-semibold text-white">General & branding</h3>
           {inp("Website name", v.site_name, (x) => set("site_name", x), "set-site-name")}{inp("Logo URL", v.logo_url, (x) => set("logo_url", x), "set-logo-url")}{inp("Favicon URL", v.favicon_url, (x) => set("favicon_url", x), "set-favicon-url")}

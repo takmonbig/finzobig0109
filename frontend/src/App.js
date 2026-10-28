@@ -5,6 +5,13 @@ import { LayoutDashboard, Wallet, Layers, ArrowDownToLine, ArrowUpFromLine, Netw
   FileText, Settings, ScrollText, ShieldCheck, Landmark, MessageSquareWarning, PlayCircle, Video, Target, CalendarDays } from "lucide-react";
 import { api } from "@/lib/api";
 import { initPixels, track } from "@/lib/pixel";
+import { LanguagePicker } from "@/components/Onboarding";
+import { useParams } from "react-router-dom";
+
+function RefRedirect() {
+  const { code } = useParams();
+  return <Navigate to={`/register?ref=${encodeURIComponent(code || "")}`} replace />;
+}
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Loader } from "@/components/common";
@@ -76,6 +83,7 @@ function AppRoutes() {
       </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/r/:code" element={<RefRedirect />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/app" element={<Guard role="user"><AppShell items={USER_NAV} area="user" /></Guard>}>
@@ -122,7 +130,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <BrowserRouter><PixelTracker /><AppRoutes /></BrowserRouter>
+        <BrowserRouter><PixelTracker /><LanguagePicker /><div id="gt-el" className="hidden" /><AppRoutes /></BrowserRouter>
         <Toaster theme="dark" richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>

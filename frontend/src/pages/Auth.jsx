@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,14 +40,19 @@ export function Login() {
   const [err, setErr] = useState(null);
   const [challenge, setChallenge] = useState(null);
   const [code, setCode] = useState("");
+  const [mode, setMode] = useState("email");
+  const [cc, setCc] = useState("+91");
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(z.object({ email: z.string().email("Enter a valid email"), password: z.string().min(1, "Password required") })),
+    resolver: zodResolver(z.object({ email: z.string().optional(), mobile: z.string().optional(), password: z.string().min(1, "Password required") })),
   });
   const done = (u) => { setUser(u); toast.success(`Welcome back, ${u.full_name}`); nav(goHome(u)); };
   const onSubmit = async (v) => {
     setErr(null);
+    if (mode === "email" && !/^\S+@\S+\.\S+$/.test(v.email || "")) return setErr("Enter a valid email");
+    if (mode === "mobile" && !/^\d{6,15}$/.test((v.mobile || "").replace(/\D/g, ""))) return setErr("Enter a valid mobile number");
+    const body = mode === "email" ? { email: v.email.trim(), password: v.password } : { country_code: cc, mobile: v.mobile.replace(/\D/g, ""), password: v.password };
     try {
-      const { data } = await api.post("/auth/login", v);
+      const { data } = await api.post("/auth/login", body);
       data.requires_2fa ? setChallenge(data.challenge_token) : done(data);
     } catch (e) { setErr(errMsg(e)); }
   };
@@ -68,7 +73,12 @@ export function Login() {
   return (
     <Shell title="Sign in" subtitle="Access your account dashboard.">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
-        <Field label="Email" error={errors.email?.message}><Input className="inp" type="email" autoComplete="email" {...register("email")} data-testid="login-email-input" /></Field>
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800">{[["email", "Email"], ["mobile", "Mobile number"]].map(([k, l]) => (
+          <button key={k} type="button" onClick={() => setMode(k)} data-testid={`login-mode-${k}`} className={`py-2 rounded-lg text-sm transition-colors ${mode === k ? "bg-amber-500/20 text-amber-200" : "text-slate-400"}`}>{l}</button>))}</div>
+        {mode === "email" ? <Field label="Email" error={errors.email?.message}><Input className="inp" type="email" autoComplete="email" autoCapitalize="none" {...register("email")} data-testid="login-email-input" /></Field> : (<>
+          <Field label="Country"><select className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-3 h-10 text-base sm:text-sm" value={cc} onChange={(e) => setCc(e.target.value)} data-testid="login-country-select">
+            {COUNTRIES.map(([n, d]) => <option key={n} value={d}>{`${n} (${d})`}</option>)}</select></Field>
+          <Field label="Mobile number"><div className="flex gap-2"><span className="inp flex items-center px-3 rounded-xl border border-slate-700 font-num text-sm">{cc}</span><Input className="inp font-num" type="tel" inputMode="numeric" autoComplete="tel-national" {...register("mobile")} data-testid="login-mobile-input" /></div></Field></>)}
         <Field label="Password" error={errors.password?.message}><PasswordInput autoComplete="current-password" {...register("password")} testid="login-password-input" /></Field>
         <div className="text-right"><a href={site?.settings?.telegram?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 hover:underline" data-testid="forgot-password-link">Forgot password? Contact support on Telegram</a></div>
         <ErrorBox error={err} />
@@ -98,6 +108,14 @@ export function Register() {
   const [err, setErr] = useState(null);
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(regSchema), defaultValues: { country: "India", country_code: "+91", referral_code: sp.get("ref") || "" } });
   const country = watch("country");
+  const [referrer, setReferrer] = useState(null);
+  const refCode = watch("referral_code");
+  useEffect(() => {
+    const c = (refCode || "").trim();
+    if (c.length < 6) { setReferrer(null); return undefined; }
+    const t = setTimeout(() => { api.get(`/public/referrer/${encodeURIComponent(c)}`).then((r) => setReferrer(r.data.name)).catch(() => setReferrer(null)); }, 400);
+    return () => { clearTimeout(t); };
+  }, [refCode]);
   const onSubmit = async (v) => {
     setErr(null);
     try {
@@ -122,7 +140,8 @@ export function Register() {
         </div>
         <Field label="Password" error={errors.password?.message}><PasswordInput autoComplete="new-password" {...register("password")} testid="register-password-input" /></Field>
         <Field label="Confirm password" error={errors.confirm_password?.message}><PasswordInput {...register("confirm_password")} testid="register-confirm-password-input" /></Field>
-        <Field label="Referral code (optional)" error={errors.referral_code?.message}><Input className="inp font-num uppercase" {...register("referral_code")} data-testid="register-referral-input" /></Field>
+        <Field label="Referral code (optional)" error={errors.referral_code?.message}><Input className="inp font-num uppercase" readOnly={!!sp.get("ref")} {...register("referral_code")} data-testid="register-referral-input" /></Field>
+        {referrer && <p className="text-xs text-emerald-300 -mt-2" data-testid="register-referrer">Invited by {referrer}</p>}
         <label className="flex gap-3 items-start text-sm text-slate-300">
           <input type="checkbox" className="mt-1 accent-amber-500" {...register("accept_terms")} data-testid="register-terms-checkbox" />
           <span>I accept the <Link to="/legal/terms" className="text-amber-400" target="_blank">Terms</Link> and <Link to="/legal/risk" className="text-amber-400" target="_blank">Risk Disclosure</Link>, and understand plan figures are not guaranteed.</span>

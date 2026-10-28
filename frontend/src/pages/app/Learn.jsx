@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { tourKey } from "@/components/Onboarding";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -162,9 +164,12 @@ export function WebinarGate() {
   const loc = useLocation();
   const nav = useNavigate();
   const { data: w } = useQuery({ queryKey: ["webinar"], queryFn: () => get("/webinar"), refetchInterval: false });
+  const { user } = useAuth();
+  const [tourDone, setTourDone] = useState(() => !!localStorage.getItem(tourKey(user?.id)));
+  useEffect(() => { const f = () => setTourDone(true); window.addEventListener("tour:done", f); return () => { window.removeEventListener("tour:done", f); }; }, []);
   const [skipAt, setSkipAt] = useState(() => Number(localStorage.getItem("webinar_skip_at") || 0));
   const skipped = Date.now() - skipAt < 3 * 3600 * 1000;
-  const open = !!w && w.enabled && !!w.video_id && !w.completed_at && !skipped && !loc.pathname.startsWith("/app/webinar");
+  const open = tourDone && !!w && w.enabled && !!w.video_id && !w.completed_at && !skipped && !loc.pathname.startsWith("/app/webinar");
   const skip = () => { const t = Date.now(); localStorage.setItem("webinar_skip_at", String(t)); setSkipAt(t); };
   const go = () => nav("/app/webinar");
   return (

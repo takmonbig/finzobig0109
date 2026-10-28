@@ -27,7 +27,9 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    email: EmailStr | None = None
+    country_code: str | None = Field(default=None, max_length=6)
+    mobile: str | None = Field(default=None, max_length=20)
     password: str
 
 
@@ -103,17 +105,25 @@ async def register(body: RegisterIn, request: Request, response: Response):
 @router.post("/login")
 async def login(body: LoginIn, request: Request, response: Response):
     ip = client_ip(request)
-    email = body.email.lower()
+    if body.email:
+        email = body.email.lower()
+        lookup = {"email": email}
+    elif body.mobile and body.country_code:
+        mob = re.sub(r"\D", "", body.mobile)
+        email = f"{body.country_code}{mob}"
+        lookup = {"country_code": body.country_code, "mobile": {"$in": list({mob, body.mobile.strip()})}}
+    else:
+        raise HTTPException(400, "Enter your email or mobile number")
     ident = f"{ip}:{email}"
     att = await db.login_attempts.find_one({"identifier": ident})
     if att and att.get("count", 0) >= 5 and att.get("locked_until") and datetime.fromisoformat(att["locked_until"]) > now():
         raise HTTPException(429, "Too many failed attempts. Try again in 15 minutes.")
-    user = await db.users.find_one({"email": email, "deleted": {"$ne": True}}, {"_id": 0})
+    user = await db.users.find_one({**lookup, "deleted": {"$ne": True}}, {"_id": 0})
     if not user or not verify_password(body.password, user["password_hash"]):
         cnt = (att or {}).get("count", 0) + 1
         await db.login_attempts.update_one({"identifier": ident}, {"$set": {"count": cnt, "locked_until": iso(now() + timedelta(minutes=15)) if cnt >= 5 else None}}, upsert=True)
         await security_event("login_failed", user["id"] if user else None, ip, {"email": email, "attempt": cnt}, "warning" if cnt >= 3 else "info")
-        raise HTTPException(401, "Invalid email or password")
+        raise HTTPException(401, "Invalid login details or password")
     if user.get("status") == "suspended":
         raise HTTPException(403, "Account suspended. Contact support.")
     await db.login_attempts.delete_one({"identifier": ident})

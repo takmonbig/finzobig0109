@@ -53,7 +53,7 @@ function Downline({ id, onOpen }) {
   return (
     <div className="space-y-3" data-testid="ud-downline">
       <div className="flex flex-wrap gap-2 text-xs">{data.by_generation.map((c, i) => <span key={i} className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800">T{i + 1}: <b className="text-white">{c}</b></span>)}<span className="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-200">Total {data.total}</span>
-        <button className="btn-ghost !py-1 !px-3 !text-xs ml-auto" disabled={!data.total} onClick={() => downloadCsv(`/admin/users/${id}/downline/export`, `downline_${id}.csv`)} data-testid="ud-downline-export-btn"><Download className="w-3.5 h-3.5" />Download spreadsheet</button></div>
+        <button className="btn-ghost !py-1 !px-3 !text-xs ml-auto" disabled={!data.total} onClick={() => downloadCsv(`/admin/users/${id}/downline/export?q=${encodeURIComponent(q)}&generation=${gen || 0}`, `downline_${id}${gen ? `_T${gen}` : ""}.csv`)} data-testid="ud-downline-export-btn"><Download className="w-3.5 h-3.5" />Download spreadsheet</button></div>
       <div className="flex gap-2"><Input className="inp" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} data-testid="ud-downline-search" />
         <select className={sel} value={gen} onChange={(e) => setGen(e.target.value)} data-testid="ud-downline-gen"><option value="">All</option>{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>{`T${g}`}</option>)}</select></div>
       <div className="overflow-x-auto"><table className="tbl"><thead><tr><th>Gen</th><th>Member</th><th>Contact</th><th>Rank</th><th>Status</th><th>Joined</th><th>Last login</th><th>Last active</th><th>USDT bal.</th><th>Deposited</th></tr></thead>
@@ -64,6 +64,42 @@ function Downline({ id, onOpen }) {
           <td className="font-num">{coins(r.usdt_balance)}</td><td className="font-num">{coins(r.verified_deposits)}</td></tr>)}</tbody></table></div>
       {!rows.length && <Empty title="No downline members" />}
     </div>
+  );
+}
+
+function SetPassword({ id }) {
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    setBusy(true);
+    try { await api.post(`/admin/users/${id}/password`, { new_password: pw }); toast.success("New password set. The user was signed out of all devices."); setPw(""); } catch (e) { toast.error(errMsg(e)); }
+    setBusy(false);
+  };
+  return (
+    <div className="border-t border-slate-800 pt-3"><p className="text-sm font-semibold text-white mb-2">Set a new password</p>
+      <div className="flex gap-2"><Input className="inp" type="text" placeholder="Min 8 characters, letters + numbers" value={pw} onChange={(e) => setPw(e.target.value)} data-testid="ud-new-password-input" />
+        <button className="btn-gold shrink-0" disabled={busy || pw.length < 8} onClick={save} data-testid="ud-set-password-btn">Set password</button></div></div>
+  );
+}
+
+function ProgressReport() {
+  const [q, setQ] = useState("");
+  const { data, isLoading } = useQuery({ queryKey: ["progress-report"], queryFn: () => get("/admin/reports/progress") });
+  if (isLoading) return <Loader />;
+  const rows = data.items.filter((r) => !q || `${r.full_name} ${r.email}`.toLowerCase().includes(q.toLowerCase()));
+  const Bar = ({ v }) => <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden"><div className="h-full bg-gradient-to-r from-amber-500 to-amber-300" style={{ width: `${Math.min(100, v)}%` }} /></div>;
+  return (
+    <Glass data-testid="progress-report">
+      <div className="flex flex-wrap gap-2 mb-3 text-xs">{Object.entries(data.rank_counts).map(([k, v]) => <span key={k} className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800">{k}: <b className="text-white">{v}</b></span>)}</div>
+      <Input className="inp mb-3" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} data-testid="progress-search" />
+      <div className="overflow-x-auto"><table className="tbl"><thead><tr><th>Member</th><th>Rank</th><th>Direct / team</th><th>Next rank</th><th>Rank progress</th><th>Team volume</th><th>Rewards reached</th><th>Next reward</th><th>Reward progress</th><th>Claims</th></tr></thead>
+        <tbody>{rows.map((r) => <tr key={r.id} data-testid={`progress-row-${r.id}`}><td><p className="text-white">{r.full_name}</p><p className="text-[11px] text-slate-500">{r.email}</p></td><td><RankBadge rank={r.rank} /></td>
+          <td className="font-num">{r.direct} / {r.team}</td><td className="text-xs">{r.next_rank ? <>{r.next_rank}<p className="text-slate-500">needs {r.next_rank_needs.direct} direct, {r.next_rank_needs.team} team</p></> : "Top rank"}</td>
+          <td><div className="flex items-center gap-2"><Bar v={r.rank_progress} /><span className="font-num text-xs">{r.rank_progress}%</span></div></td><td className="font-num">{coins(r.team_volume, 0)}</td>
+          <td className="text-xs">{r.rewards_reached.join(", ") || "—"}</td><td className="text-xs">{r.next_reward || "All reached"}</td>
+          <td><div className="flex items-center gap-2"><Bar v={r.reward_progress} /><span className="font-num text-xs">{r.reward_progress}%</span></div></td><td className="text-xs">{r.claims.join(", ") || "—"}</td></tr>)}</tbody></table></div>
+      {!rows.length && <Empty title="No members" />}
+    </Glass>
   );
 }
 
@@ -92,6 +128,7 @@ function UserDetail({ id, onClose, onOpen }) {
             <Field label="Group"><Input className="inp" defaultValue={u.group} onBlur={(e) => e.target.value !== u.group && patch({ group: e.target.value })} data-testid="ud-group-input" /></Field>
             <label className="flex items-center gap-2 text-sm pb-2">Messaging disabled <Switch checked={!!u.messaging_disabled} onCheckedChange={(v) => patch({ messaging_disabled: v })} data-testid="ud-messaging-switch" /></label>
           </div>
+          <SetPassword id={id} />
           <div className="border-t border-slate-800 pt-3"><p className="text-sm font-semibold text-white mb-2">Ledger adjustment (coins / promo only)</p>
             <div className="grid sm:grid-cols-[130px_120px_1fr_auto] gap-2"><select className={sel} value={adj.account} onChange={(e) => setAdj({ ...adj, account: e.target.value })} data-testid="ud-adj-account"><option>demo_coins</option><option>promo</option></select>
               <Input className="inp font-num" type="number" placeholder="+/- amount" value={adj.amount} onChange={(e) => setAdj({ ...adj, amount: e.target.value })} data-testid="ud-adj-amount" />
@@ -182,9 +219,11 @@ function TeamAdmin() {
   return (
     <div data-testid="admin-team-page">
       <PageHeader title="Team management & moderation" />
-      <Tabs defaultValue="ranks"><TabsList className="bg-slate-900 flex-wrap h-auto mb-4">
+      <Tabs defaultValue="progress"><TabsList className="bg-slate-900 flex-wrap h-auto mb-4">
+        <TabsTrigger value="progress" data-testid="at-tab-progress">Rank & reward progress</TabsTrigger>
         <TabsTrigger value="ranks" data-testid="at-tab-ranks">Rank qualifications</TabsTrigger><TabsTrigger value="inspect" data-testid="at-tab-inspect">Inspect relationships</TabsTrigger>
         <TabsTrigger value="anom" data-testid="at-tab-anomalies">Anomalies</TabsTrigger><TabsTrigger value="msgs" data-testid="at-tab-messages">Announcement moderation</TabsTrigger></TabsList>
+        <TabsContent value="progress"><ProgressReport /></TabsContent>
         <TabsContent value="ranks"><Glass><div className="flex justify-between mb-3"><h3 className="font-semibold text-white">Ranked members</h3><button className="btn-ghost !py-1.5 text-sm" onClick={() => recompute.mutate()} disabled={recompute.isPending} data-testid="recompute-ranks-btn">Recompute all ranks</button></div>
           {rv.data?.ranked.length ? <table className="tbl"><thead><tr><th>Name</th><th>Email</th><th>Rank</th><th>Direct</th><th>Team</th><th /></tr></thead><tbody>{rv.data.ranked.map((r) => <tr key={r.id}><td>{r.full_name}</td><td>{r.email}</td><td><RankBadge rank={r.rank} /></td><td className="font-num">{r.direct}</td><td className="font-num">{r.team}</td><td><button className="text-xs text-amber-400" onClick={() => inspect(r.id)}>Inspect</button></td></tr>)}</tbody></table> : <Empty title="No ranked members" />}
         </Glass></TabsContent>

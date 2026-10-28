@@ -48,6 +48,15 @@ def video_id(url):
     return m.group(1)
 
 
+@router.get("/public/referrer/{code}")
+async def public_referrer(code: str):
+    u = await db.users.find_one({"referral_code": code.strip().upper()[:16], "status": "active", "deleted": {"$ne": True}}, {"_id": 0, "full_name": 1})
+    if not u:
+        raise HTTPException(404, "Referral code not found")
+    parts = u["full_name"].split()
+    return {"name": parts[0] + (f" {parts[-1][0]}." if len(parts) > 1 else "")}
+
+
 async def seed_learn():
     await db.guides.create_index("slug", unique=True)
     await db.meta_pixels.create_index("pixel_id", unique=True)

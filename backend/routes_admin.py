@@ -118,13 +118,61 @@ async def user_downline(user_id: str, admin=Depends(require_admin)):
     return {"items": out, "by_generation": by_gen, "total": len(out)}
 
 
+class SetPwIn(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+@router.post("/users/{user_id}/password")
+async def admin_set_password(user_id: str, b: SetPwIn, request: Request, admin=Depends(require_admin)):
+    from routes_auth import check_password_strength
+    from core import hash_password, security_event
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "email": 1})
+    if not u:
+        raise HTTPException(404, "User not found")
+    check_password_strength(b.new_password)
+    await db.users.update_one({"id": user_id}, {"$set": {"password_hash": hash_password(b.new_password), "password_changed_at": iso()}})
+    await db.sessions.update_many({"user_id": user_id, "revoked": False}, {"$set": {"revoked": True, "revoked_reason": "admin_password_reset"}})
+    await db.login_attempts.delete_many({"identifier": {"$regex": re.escape(u["email"]) + "$"}})
+    await security_event("admin_password_reset", user_id, client_ip(request), {"by": admin["email"]}, "warning")
+    await audit(admin, "user.password_reset", "user", user_id, {}, client_ip(request))
+    await notify_user(user_id, "Your password was changed", "An administrator set a new password for your account. Contact support if you did not request this.", kind="security")
+    return {"ok": True}
+
+
+@router.get("/reports/progress")
+async def progress_report(admin=Depends(require_admin)):
+    rewards = await db.rewards.find({"active": True}, {"_id": 0, "id": 1, "title": 1, "milestone": 1}).sort("milestone", 1).to_list(50)
+    claims = {(c["user_id"], c["reward_id"]): c["status"] for c in await db.reward_claims.find({}, {"_id": 0, "user_id": 1, "reward_id": 1, "status": 1}).to_list(5000)}
+    rows = []
+    for u in await db.users.find({"role": "user", "deleted": {"$ne": True}}, {"_id": 0, "id": 1, "full_name": 1, "email": 1, "rank": 1, "status": 1}).to_list(1000):
+        tc = await team_counts(u["id"])
+        direct, team = (tc["direct"], tc["team"]) if isinstance(tc, dict) else (tc[0], tc[1])
+        names = [r["name"] for r in RANKS]
+        cur = names.index(u["rank"]) if u.get("rank") in names else -1
+        nxt = RANKS[cur + 1] if cur + 1 < len(RANKS) else None
+        rank_pct = 100 if not nxt else round(100 * min(1, direct / nxt["min_direct"] if nxt["min_direct"] else 1) * 0.5 + 100 * min(1, team / nxt["min_team"] if nxt["min_team"] else 1) * 0.5)
+        vol = await team_volume(u["id"])
+        reached = [r["title"] for r in rewards if vol >= r["milestone"]]
+        nr = next((r for r in rewards if vol < r["milestone"]), None)
+        rows.append({**u, "direct": direct, "team": team, "next_rank": nxt["name"] if nxt else None,
+                     "next_rank_needs": {"direct": max(0, nxt["min_direct"] - direct), "team": max(0, nxt["min_team"] - team)} if nxt else None, "rank_progress": rank_pct,
+                     "team_volume": vol, "rewards_reached": reached, "next_reward": nr["title"] if nr else None,
+                     "reward_progress": round(100 * vol / nr["milestone"]) if nr else 100,
+                     "claims": [f"{r['title']}: {claims[(u['id'], r['id'])]}" for r in rewards if (u["id"], r["id"]) in claims]})
+    rows.sort(key=lambda r: (-r["rank_progress"] if r["next_rank"] else -101, -r["reward_progress"]))
+    return {"items": rows, "rank_counts": {n: sum(1 for r in rows if r.get("rank") == n) for n in ["Member"] + [x["name"] for x in RANKS]}}
+
+
 @router.get("/users/{user_id}/downline/export")
-async def export_downline(user_id: str, request: Request, admin=Depends(require_admin)):
+async def export_downline(user_id: str, request: Request, q: str = "", generation: int = 0, admin=Depends(require_admin)):
     root = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1, "full_name": 1})
     if not root:
         raise HTTPException(404, "User not found")
     data = await user_downline(user_id, admin)
     names = {r["id"]: r["full_name"] for r in data["items"]}
+    ql = q.strip().lower()
+    data["items"] = [r for r in data["items"] if (not generation or r["generation"] == generation) and (not ql or ql in f"{r['full_name']} {r.get('email', '')}".lower())]
+    data["total"] = len(data["items"])
     names[user_id] = root["full_name"]
     buf = io.StringIO()
     w = csv.writer(buf)
