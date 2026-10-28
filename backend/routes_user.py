@@ -227,13 +227,12 @@ async def coin_stats(ids):
     return out
 
 
-def member_view(m, me, cs=None):
+def member_view(m, me):
     gen = m["ancestors"].index(me) + 1
-    by = (cs or {}).get(m["id"], {})
     la = m.get("last_active_at")
     return {"id": m["id"], "name": m["full_name"] if gen == 1 else mask_name(m["full_name"]), "rank": m.get("rank", "Member"), "generation": gen,
             "joined": m["created_at"][:10], "referral_code": m["referral_code"] if gen == 1 else None, "status": m.get("status"), "parent_id": m["ancestors"][0],
-            "coins_earned": sum(by.values()), "earned_by": by, "activity": "active" if la and la >= iso(now() - timedelta(days=7)) else "inactive"}
+            "activity": "active" if la and la >= iso(now() - timedelta(days=7)) else "inactive"}
 
 
 @router.get("/coin-rewards")
@@ -272,8 +271,7 @@ async def team_summary(user=Depends(get_current_user)):
 async def team_tree(user=Depends(get_current_user)):
     me = user["id"]
     rows = await db.users.find({"$or": [{f"ancestors.{i}": me} for i in range(5)], "deleted": {"$ne": True}}, MEMBER_PROJ).to_list(5000)
-    cs = await coin_stats([r["id"] for r in rows])
-    nodes = [member_view(r, me, cs) for r in rows]
+    nodes = [member_view(r, me) for r in rows]
     by_parent = {}
     for n in nodes:
         by_parent.setdefault(n["parent_id"], []).append(n)
@@ -294,8 +292,7 @@ async def team_members(generation: int | None = None, q: str | None = None, rank
     if q:
         query["full_name"] = {"$regex": re.escape(q), "$options": "i"}
     res = await paged(db.users, query, page, size, proj=MEMBER_PROJ)
-    cs = await coin_stats([m["id"] for m in res["items"]])
-    res["items"] = [member_view(m, me, cs) for m in res["items"]]
+    res["items"] = [member_view(m, me) for m in res["items"]]
     return res
 
 
