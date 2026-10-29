@@ -43,28 +43,6 @@ function Banners() {
   ));
 }
 
-function Leaderboard() {
-  const { data } = useQuery({ queryKey: ["leaderboard"], queryFn: () => get("/leaderboard") });
-  if (!data) return null;
-  const medal = ["text-amber-300", "text-slate-300", "text-orange-400"];
-  return (
-    <Glass className="my-6" data-testid="leaderboard">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div><h3 className="font-semibold text-white flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-400" />Top referrers · {data.month}</h3>
-          <p className="text-xs text-slate-500">Finzo Coins earned from referral actions this month. Names are masked for privacy.</p></div>
-        <span className="text-xs text-slate-400" data-testid="leaderboard-mine">You this month: <b className="font-num text-emerald-300">{coins(data.my_coins)}</b></span>
-      </div>
-      {data.top.length ? <ol className="divide-y divide-slate-800">{data.top.map((r) => (
-        <li key={r.rank} className={`flex items-center gap-3 py-2 text-sm ${r.me ? "bg-amber-500/10 -mx-2 px-2 rounded-lg" : ""}`} data-testid={`leaderboard-row-${r.rank}`}>
-          <span className={`font-num w-6 font-bold ${medal[r.rank - 1] || "text-slate-500"}`}>{r.rank}</span>
-          <span className="flex-1 text-white truncate">{r.name}{r.me && <span className="ml-2 text-[10px] text-amber-300">YOU</span>}</span>
-          <span className="text-xs text-slate-500">{r.referrals} joined</span>
-          <span className="font-num text-emerald-300">{coins(r.coins)}</span></li>))}</ol>
-        : <Empty title="No referral rewards yet this month" text="Share your referral link — the first reward puts you at #1." />}
-    </Glass>
-  );
-}
-
 const QUICK = [["Deposit information", "/app/deposit", ArrowDownToLine], ["Withdrawal information", "/app/withdraw", ArrowUpFromLine], ["Wallet & ledger", "/app/wallet", Coins], ["My team", "/app/team", Network],
   ["Rewards", "/app/rewards", Trophy], ["Notifications", "/app/notifications", Bell], ["Support", "/app/support", LifeBuoy], ["Profile settings", "/app/profile", UserCog]];
 
@@ -97,7 +75,6 @@ function Overview() {
           </Link>
         ))}
       </div>
-      <Leaderboard />
       <GuidesGrid />
       <div className="grid lg:grid-cols-2 gap-5">
         <ChartCard title="Balance history" testid="chart-balance"><ResponsiveContainer><AreaChart data={d.charts.balance}>

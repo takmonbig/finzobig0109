@@ -107,18 +107,6 @@ async def downline_ids(user_id, gens=5):
     return [r["id"] for r in rows]
 
 
-@router.get("/leaderboard")
-async def leaderboard(user=Depends(get_current_user)):
-    start = now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    rows = await db.coin_rewards.aggregate([{"$match": {"created_at": {"$gte": iso(start)}, "action": {"$ne": "own_webinar"}}},
-                                            {"$group": {"_id": "$user_id", "coins": {"$sum": "$amount"}, "referrals": {"$sum": {"$cond": [{"$eq": ["$action", "friend_signup"]}, 1, 0]}}}},
-                                            {"$sort": {"coins": -1, "referrals": -1}}, {"$limit": 10}]).to_list(10)
-    names = {u["id"]: u["full_name"] for u in await db.users.find({"id": {"$in": [r["_id"] for r in rows]}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(10)}
-    top = [{"rank": i + 1, "name": mask_name(names.get(r["_id"], "")), "coins": r["coins"], "referrals": r["referrals"], "me": r["_id"] == user["id"]} for i, r in enumerate(rows)]
-    mine = await db.coin_rewards.aggregate([{"$match": {"user_id": user["id"], "created_at": {"$gte": iso(start)}, "action": {"$ne": "own_webinar"}}}, {"$group": {"_id": None, "coins": {"$sum": "$amount"}}}]).to_list(1)
-    return {"month": start.strftime("%B %Y"), "top": top, "my_coins": mine[0]["coins"] if mine else 0}
-
-
 @router.get("/dashboard")
 async def dashboard(user=Depends(get_current_user)):
     uid_ = user["id"]
